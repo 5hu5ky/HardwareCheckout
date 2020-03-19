@@ -8,10 +8,16 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
+    """
+    Home path for the site
+
+    :return:
+    """
     if current_user.is_authenticated:
         return render_template('index.html', name=current_user.name)
     else:
         return render_template('index.html')
+
 
 if __name__ == '__main__':
     app = create_app()

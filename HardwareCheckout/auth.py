@@ -1,14 +1,20 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required
-from .models import User
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from . import db
+from .models import User
 
 auth = Blueprint('auth', __name__)
 
 
 @auth.route('/login', methods=['POST'])
 def login():
+    """
+    Path that handles the actual logging in of users. All super basic at this point.
+
+    :return:
+    """
     email = request.form.get('email')
     password = request.form.get('password')
     remember = True if request.form.get('remember') else False
@@ -23,18 +29,31 @@ def login():
     return redirect(url_for('main.index'))
 
 
-@auth.route('/login')
+@auth.route('/login', methods=['GET'])
 def login_page():
+    """
+    Serves the html for the login page.
+    :return:
+    """
     return render_template('login.html')
 
 
 @auth.route('/signup', methods=['GET'])
 def signup_page():
+    """
+    Serves the html for the signup page
+    :return:
+    """
     return render_template('signup.html')
 
 
 @auth.route('/signup', methods=['POST'])
 def signup():
+    """
+    Super basic signup handler
+
+    :return:
+    """
     email = request.form.get('email')
     name = request.form.get('name')
     password = request.form.get('password')
@@ -56,5 +75,9 @@ def signup():
 @auth.route('/logout')
 @login_required
 def logout():
+    """
+    Path that handles logging a user out.
+    :return:
+    """
     logout_user()
     return redirect(url_for('main.index'))
