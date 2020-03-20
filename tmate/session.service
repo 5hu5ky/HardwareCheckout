@@ -1,0 +1,11 @@
+[Unit]
+Description=Starts tmate session
+
+[Service]
+Type=simple
+ExecStart=/root/session.sh
+Restart=on-failure
+ExecReload=/root/session_restart.sh
+
+[Install]
+WantedBy=multi-user.target
