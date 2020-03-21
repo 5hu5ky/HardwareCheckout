@@ -13,10 +13,13 @@ def index():
 
     :return:
     """
+    terminals = [
+            # todo, populate this with the actuall terminals
+        ]
     if current_user.is_authenticated:
-        return render_template('index.html', name=current_user.name)
+        return render_template('index.html', name=current_user.name, terminals=terminals)
     else:
-        return render_template('index.html')
+        return render_template('index.html', terminals=terminals)
 
 
 if __name__ == '__main__':
