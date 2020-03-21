@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 import datetime 
 
 from . import db
-from .models import User, UserQueue, DeviceQueue
+from .models import User, UserQueue, DeviceQueue, Device
 
 checkin = Blueprint('checkin', __name__)
 
@@ -13,7 +13,9 @@ def return_device():
     """
     This path will allow a client to return their device to the queue
     """
-    if current_user.isHuman:
+    import pdb
+    pdb.set_trace()
+    if not isinstance(current_user, Device):
         abort(404)
     msg = {"status":"error"}
     content = request.get_json(force=True)
@@ -21,24 +23,43 @@ def return_device():
     web_url = content['web']
     ro_url = content['web_ro']
 
-    queuedUser = UserQueue.query.filter_by(hasDevice=False).first()
-    if queuedUser:
-        user = User.query.filter_by(id=queuedUser.userId)
-        if user and not user.hasDevice:
-            user.hasDevice = True
+    # TODO This loop is ugly
+    while True:
+        # find the first person in line
+        queuedUser = db.session.query(UserQueue).order_by(UserQueue.id).first()
+        if queuedUser:
+            # get their user info
+            user = db.session.query(User).filter_by(id=queuedUser.userId).first()
+            # make sure they don't have another device already
+            if user and not user.hasDevice:
+                user.hasDevice = True
+                break
+        else:
+            break
 
-    queueEntry = DeviceQueue(
-        webUrl = web_url,
-        roUrl = ro_url,
-        inUse = False,
-        inReadyState = queuedUser == True,
-        owner = user.id if queuedUser and user else None,
-        expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
-    )
+    queueEntry = db.session.query(DeviceQueue).filter_by(id=current_user.id).first()
+    if queueEntry:
+        queueEntry.webUrl = web_url
+        queueEntry.roUrl = ro_url
+        queueEntry.inUse = False
+        queueEntry.inReadyState = queuedUser == True
+        queueEntry.owner = user.id if queuedUser and user else None
+        queueEntry.expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    else:
+        # create a device entry for this device
+        queueEntry = DeviceQueue(
+            webUrl = web_url,
+            roUrl = ro_url,
+            inUse = False,
+            inReadyState = queuedUser == True,
+            owner = user.id if queuedUser and user else None,
+            expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
+            device = current_user.id
+        )
+        DeviceQueue.add(queueEntry)
 
-    DeviceQueue.add(queueEntry)
     db.session.commit()
-
+    msg['status'] = "success"
 
     return jsonify(msg)
         
