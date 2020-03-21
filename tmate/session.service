@@ -1,0 +1,12 @@
+[Unit]
+Description=Starts tmate session
+
+[Service]
+User=villager
+Type=forking
+ExecStart=session.sh
+Restart=on-failure
+ExecReload=session_restart.sh
+
+[Install]
+WantedBy=multi-user.target
