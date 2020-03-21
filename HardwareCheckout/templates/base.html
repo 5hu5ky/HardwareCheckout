@@ -8,7 +8,7 @@
     <title>Flask Auth Example</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css"/>
 
-    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
+    {% block head %}{% endblock %}
 </head>
 
 <body>
@@ -45,33 +45,10 @@
     </div>
 
     <div class="hero-body">
-        <div class="container">
-            <div class="columns">
-                <div id="stream-1" class="column"></div>
-                <div id="stream-2" class="column"></div>
-                <div id="stream-3" class="column"> </div>
-            </div>
-        </div>
+        {% block content %}{% endblock %}
     </div>
 </section>
 
-<script type="text/javascript">
-    let player1 = new Twitch.Player("stream-1", {
-        width: 400,
-        height: 300,
-        channel: "carhackingvillage"
-    });
-    let player2 = new Twitch.Player("stream-2", {
-        width: 400,
-        height: 300,
-        channel: "carhackingvillage2"
-    });
-    let player3 = new Twitch.Player("stream-3", {
-        width: 400,
-        height: 300,
-        channel: "carhackingvillage3"
-    });
-
-</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>
