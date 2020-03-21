@@ -8,27 +8,35 @@ class User(UserMixin, db.Model):
     """
     Suuuuper basic User model, this will almost certainly need to be updated.
     """
+    __tablename__ = "user"
     id = Column(Integer, primary_key=True)
     email = Column(String(100), unique=True)
     password = Column(String(100))
     name = Column(String(1000))
-    isHuman = Column(Boolean)
     hasDevice = Column(Boolean)
 
     #relationships
-    queueEntry = relationship("UserQueue")
-    deviceId = Column(Integer, ForeignKey("DeviceQueue.id"))
+    queueEntry = relationship("userqueue")
+    deviceId = Column(Integer, ForeignKey("devicequeue.id"))
 
+class Device(db.Model):
+    __tablename__ = "device"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True)
+    secret = Column(String(100))
 
 class UserQueue(db.Model):
+    __tablename__ = "userqueue"
     id = Column(Integer, primary_key=True)
-    userId = Column(Integer, ForeignKey("User.id"))
+    userId = Column(Integer, ForeignKey("user.id"))
 
 class DeviceQueue(db.Model):
+    __tablename__ = "devicequeue"
     id = Column(Integer, primary_key=True)
     webUrl = Column(String(200))
     roUrl = Column(String(200))
     inUse = Column(Boolean)
     inReadyState = Column(Boolean)
     expiration = Column(Time)
-    owner = Column(Integer, ForeignKey("User.id"))
+    owner = Column(Integer, ForeignKey("user.id"))
+    device = Column(Integer, ForeignKey("device.id"))

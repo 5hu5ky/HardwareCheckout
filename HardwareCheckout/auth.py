@@ -1,12 +1,28 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db
-from .models import User
+from .models import User, Device
 
 auth = Blueprint("auth", __name__)
 
+
+@auth.route("/device", methods=["POST"])
+def device_signin():
+    """
+    This is the auth route for devices
+    """
+    name = request.form.get("name")
+    secret = request.form.get("secret")
+
+    device = Device.query.filter_by(name=name).first()
+    if not device or not check_password_hash(device.secret, secret):
+        abort(404)
+        
+    login_user(device, remember=True)
+    return jsonify({"status":"success"})
+    
 
 @auth.route("/login", methods=["POST"])
 def login():
