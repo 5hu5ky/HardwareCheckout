@@ -26,7 +26,7 @@ def return_device():
     # TODO This loop is ugly
     while True:
         # find the first person in line
-        queuedUser = db.session.query(UserQueue).order_by(UserQueue.id).first()
+        queuedUser = db.session.query(UserQueue).filter_by(type=current_user.type).order_by(UserQueue.id).first()
         if queuedUser:
             # get their user info
             user = db.session.query(User).filter_by(id=queuedUser.userId).first()
@@ -54,7 +54,8 @@ def return_device():
             inReadyState = queuedUser == True,
             owner = user.id if queuedUser and user else None,
             expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
-            device = current_user.id
+            device = current_user.id,
+            type = current_user.type
         )
         DeviceQueue.add(queueEntry)
 
@@ -63,3 +64,19 @@ def return_device():
 
     return jsonify(msg)
         
+@checkin.route("/regiser/<device>", methods=["GET"])
+@login_required
+def requestDevice(device):
+    if current_user.hasDevice:
+        return render_template("error.html", error="You already have a device in use.")
+    
+    # TODO add user to queue
+
+@checkin.route("/queue", methods=["GET"])
+def showQueue():
+    '''
+    This function needs to return the current queue of people and what device they are waiting on
+    '''
+    # TODO figure how why this is broken
+    queueOrder = db.session.query(UserQueue).select_from(User).join(User.id).order_by(UserQueue.id)
+    return jsonify(queueOrder)

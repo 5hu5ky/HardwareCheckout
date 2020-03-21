@@ -19,16 +19,24 @@ class User(UserMixin, db.Model):
     queueEntry = relationship("userqueue")
     deviceId = Column(Integer, ForeignKey("devicequeue.id"))
 
-class Device(db.Model):
+class DeviceType(db.Model):
+    __tablename__ = "devicetype"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(1000))
+
+
+class Device(UserMixin, db.Model):
     __tablename__ = "device"
     id = Column(Integer, primary_key=True)
     name = Column(String(100), unique=True)
     secret = Column(String(100))
+    type = Column(Integer, ForeignKey("devicetype.id"))
 
 class UserQueue(db.Model):
     __tablename__ = "userqueue"
     id = Column(Integer, primary_key=True)
     userId = Column(Integer, ForeignKey("user.id"))
+    type = Column(Integer, ForeignKey("devicetype.id"))
 
 class DeviceQueue(db.Model):
     __tablename__ = "devicequeue"
@@ -40,3 +48,5 @@ class DeviceQueue(db.Model):
     expiration = Column(Time)
     owner = Column(Integer, ForeignKey("user.id"))
     device = Column(Integer, ForeignKey("device.id"))
+
+    
