@@ -77,6 +77,10 @@ def showQueue():
     '''
     This function needs to return the current queue of people and what device they are waiting on
     '''
+    # TODO check to see if any devices are free
+    
+
     # TODO figure how why this is broken
     queueOrder = db.session.query(UserQueue).select_from(User).join(User.id).order_by(UserQueue.id)
+
     return jsonify(queueOrder)
