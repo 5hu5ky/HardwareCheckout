@@ -3,11 +3,12 @@ Description=Starts tmate session
 PartOf=workers.target
 
 [Service]
+EnvironmentFile=/root/data
 User=villager
 Type=forking
-ExecStart=session.sh %i
+ExecStart=/root/session.sh %i
 Restart=on-failure
-ExecReload=session_restart.sh %i
+ExecReload=/root/session_restart.sh %i
 
 [Install]
 WantedBy=multi-user.target

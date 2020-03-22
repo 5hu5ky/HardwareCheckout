@@ -1,5 +1,5 @@
 #!/bin/bash
 
-SOCK=/tmp/tmate.sock
+SOCK=/tmp/tmate$1.sock
 tmate -S $SOCK kill-session
-/root/session.sh
+/usr/local/sbin/session.sh $1
