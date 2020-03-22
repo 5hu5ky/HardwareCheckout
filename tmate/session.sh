@@ -4,7 +4,7 @@ SOCK=/tmp/tmate$1.sock
 
 tmate -S $SOCK new-session -d
 tmate -S $SOCK wait tmate-ready
-WEB=$(tmate -S $SOCK display -p "#{tmate_web}"), $(tmate -S $SOCK display -p "#{tmate_ssh}")
+WEB=$(tmate -S $SOCK display -p "#{tmate_web}"),$(tmate -S $SOCK display -p "#{tmate_ssh}")
 WEB_RO=$(tmate -S $SOCK display -p "#{tmate_web_ro}")
 
 python3 <<EOF
