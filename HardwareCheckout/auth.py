@@ -1,12 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db
-from .models import User
+from .models import User, Role
 
 auth = Blueprint("auth", __name__)
-
+    
 
 @auth.route("/login", methods=["POST"])
 def login():
@@ -15,11 +15,14 @@ def login():
 
     :return:
     """
-    email = request.form.get("email")
+    name = request.form.get("name")
     password = request.form.get("password")
     remember = True if request.form.get("remember") else False
 
-    user = User.query.filter_by(email=email).first()
+    if name is None or password is None:
+        abort(400)
+
+    user = User.query.filter_by(name=name).first()
 
     if not user or not check_password_hash(user.password, password):
         flash("Please check your login details and try again.")
@@ -54,21 +57,19 @@ def signup():
 
     :return:
     """
-    email = request.form.get("email")
     name = request.form.get("name")
     password = request.form.get("password")
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(name=name).first()
 
     if user:
-        flash("Email address already exists")
+        flash("User name already exists")
         return redirect(url_for("auth.signup"))
 
     new_user = User(
-        email=email,
         name=name,
-        password=generate_password_hash(password, method="sha256"),
-        isHuman=True,
+        password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
+        roles = [Role.query.filter_by(name='Human').first()]
     )
 
     db.session.add(new_user)

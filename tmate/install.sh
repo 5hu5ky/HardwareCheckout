@@ -2,7 +2,7 @@
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 sudo cp $SCRIPTPATH/session.sh $SCRIPTPATH/session_restart.sh /usr/local/sbin
-sudo cp $SCRIPTPATH/session.service /etc/systemd/system/
+sudo cp $SCRIPTPATH/session@.service $SCRIPTPATH/session.target /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable session.service
-sudo systemctl start session.service
+sudo systemctl start session.target
+sudo systemctl enable session.target

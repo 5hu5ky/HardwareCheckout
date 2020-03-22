@@ -1,0 +1,6 @@
+[Unit]
+Description=Session creation target
+Requires=session@1.service session@2.service session@3.service
+
+[Install]
+WantedBy=multi-user.target
