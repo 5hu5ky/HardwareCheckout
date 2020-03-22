@@ -1,5 +1,5 @@
 from flask_user import UserMixin
-from sqlalchemy import Table, Column, Integer, String, Boolean, ForeignKey, Time
+from sqlalchemy import Table, Column, Integer, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from . import db
 
@@ -48,7 +48,7 @@ class DeviceQueue(db.Model):
     roUrl = Column(String(200))
     inUse = Column(Boolean)
     inReadyState = Column(Boolean)
-    expiration = Column(Time)
+    expiration = Column(DateTime)
     owner = Column(Integer, ForeignKey("user.id"))
     # device = Column(Integer, ForeignKey("user.id"))
 

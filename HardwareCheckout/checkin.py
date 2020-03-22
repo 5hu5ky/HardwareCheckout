@@ -1,22 +1,21 @@
 from flask import Blueprint, render_template, abort, request, jsonify
 from flask_login import current_user, login_required
+from flask_user import roles_required
 import datetime 
 
 from . import db
-from .models import User, UserQueue, DeviceQueue, Device
+from .models import User, UserQueue, DeviceQueue
 
 checkin = Blueprint('checkin', __name__)
 
 @checkin.route("/checkin", methods=['POST'])
-@login_required
+@roles_required("Device")
 def return_device():
     """
     This path will allow a client to return their device to the queue
     """
-    import pdb
-    pdb.set_trace()
-    if not isinstance(current_user, Device):
-        abort(404)
+    # import pdb
+    # pdb.set_trace()
     msg = {"status":"error"}
     content = request.get_json(force=True)
     
@@ -54,11 +53,9 @@ def return_device():
             inReadyState = queuedUser == True,
             owner = user.id if queuedUser and user else None,
             expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
-            device = current_user.id,
-            type = current_user.type
         )
-        DeviceQueue.add(queueEntry)
-
+        db.session.add(queueEntry)
+        
     db.session.commit()
     msg['status'] = "success"
 
