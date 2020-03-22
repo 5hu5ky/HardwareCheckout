@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-from flask_login import current_user
+from flask import current_app as app
 
 from . import create_app
 
@@ -13,14 +13,8 @@ def index():
 
     :return:
     """
-    terminals = [
-            # todo, populate this with the actuall terminals
-        ]
-    if current_user.is_authenticated:
-        return render_template('index.html', name=current_user.name, terminals=terminals)
-    else:
-        return render_template('index.html', terminals=terminals)
+    return render_template('index.html', terminals=app.config['TERMINALS'])
 
 
 if __name__ == '__main__':
-    app = create_app()
+    create_app()
