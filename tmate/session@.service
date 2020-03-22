@@ -3,7 +3,6 @@ Description=Starts tmate session
 PartOf=workers.target
 
 [Service]
-EnvironmentFile=/root/data
 User=villager
 Type=forking
 ExecStart=/usr/local/sbin/session.sh %i
