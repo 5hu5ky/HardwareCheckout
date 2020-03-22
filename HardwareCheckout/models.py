@@ -1,36 +1,39 @@
-from flask_login import UserMixin
+from flask_user import UserMixin
 from sqlalchemy import Table, Column, Integer, String, Boolean, ForeignKey, Time
 from sqlalchemy.orm import relationship
 from . import db
 
 
-class User(UserMixin, db.Model):
+class User(db.Model, UserMixin):
     """
     Suuuuper basic User model, this will almost certainly need to be updated.
     """
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
-    email = Column(String(100), unique=True)
-    password = Column(String(100))
+    password = Column(String(100), unique=True)
     name = Column(String(1000))
-    hasDevice = Column(Boolean)
-
+    
     #relationships
-    queueEntry = relationship("userqueue")
-    deviceId = Column(Integer, ForeignKey("devicequeue.id"))
+    roles = db.relationship('Role', secondary='user_roles')
+    userQueueEntry = relationship("UserQueue")
+    deviceQueueEntry = relationship("DeviceQueue")
+    type = Column(Integer, ForeignKey("devicetype.id"))
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(50), unique=True)
+
+class UserRoles(db.Model):
+    __tablename__ = 'user_roles'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
+    role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
 
 class DeviceType(db.Model):
     __tablename__ = "devicetype"
     id = Column(Integer, primary_key=True)
-    name = Column(String(1000))
-
-
-class Device(UserMixin, db.Model):
-    __tablename__ = "device"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), unique=True)
-    secret = Column(String(100))
-    type = Column(Integer, ForeignKey("devicetype.id"))
+    name = Column(String(250), unique=True)
 
 class UserQueue(db.Model):
     __tablename__ = "userqueue"
@@ -47,6 +50,6 @@ class DeviceQueue(db.Model):
     inReadyState = Column(Boolean)
     expiration = Column(Time)
     owner = Column(Integer, ForeignKey("user.id"))
-    device = Column(Integer, ForeignKey("device.id"))
+    # device = Column(Integer, ForeignKey("user.id"))
 
     
