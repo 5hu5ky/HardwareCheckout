@@ -39,3 +39,8 @@
       width: 100%;
       height: 100%;
   }
+
+  .has-image-centered {
+      margin-left: auto;
+      margin-right: auto;
+  }

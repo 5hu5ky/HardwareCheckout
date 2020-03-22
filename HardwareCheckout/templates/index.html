@@ -16,13 +16,13 @@
 
         <div class="tab">
             {% for term in terminals %}
-            <button class="tablinks" onclick="openCity(event, '{{term['name']}}')">{{term["name"]}}</button>
+            <button class="tablinks" onclick="openTab(event, '{{term['name']}}')">{{term["name"]}}</button>
             {% endfor %}
         </div>
 
         {% for term in terminals %}
         <div id="{{term['name']}}" class="tabcontent">
-            <iframe  src="{{term['roUrl']}}"></iframe>
+            <iframe  id="{{ term['name'] }}-frame" src="{{term['roUrl']}}" style="height:100%;width:100%;"></iframe>
         </div>
         {% endfor %}
     </div>

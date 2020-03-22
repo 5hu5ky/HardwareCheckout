@@ -1,7 +1,7 @@
-function openCity(evt, cityName) {
+function openTab(evt, tabName) {
     // Declare all variables
     var i, tabcontent, tablinks;
-  
+
     // Get all elements with class="tabcontent" and hide them
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
@@ -15,6 +15,10 @@ function openCity(evt, cityName) {
     }
   
     // Show the current tab, and add an "active" class to the button that opened the tab
-    document.getElementById(cityName).style.display = "block";
+    document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
-  } 
+    let frameId = tabName + '-frame';
+
+    // reload the iframe's source, this will make sure that the shell displays correctly whenever the tab viewed.
+    document.getElementById(frameId).src = document.getElementById(frameId).src;
+  }
