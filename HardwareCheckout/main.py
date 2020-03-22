@@ -13,7 +13,7 @@ def index():
 
     :return:
     """
-    return render_template('index.html', terminals=app.config['TERMINALS'])
+    return render_template('index.html', terminals=[])
 
 
 if __name__ == '__main__':
