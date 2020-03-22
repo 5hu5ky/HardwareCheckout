@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% block head %}
+<link rel= "stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/term.css') }}">
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
+<script src="{{ url_for('static',filename='js/term.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -9,11 +11,21 @@
         <div class="columns">
             <div id="stream-1" class="column"></div>
             <div id="stream-2" class="column"></div>
-            <div id="stream-3" class="column"> </div>
+            <div id="stream-3" class="column"></div>
         </div>
+
+        <div class="tab">
+            {% for term in terminals %}
+            <button class="tablinks" onclick="openTab(event, '{{term['name']}}')">{{term["name"]}}</button>
+            {% endfor %}
+        </div>
+
+        {% for term in terminals %}
+        <div id="{{term['name']}}" class="tabcontent">
+            <iframe  id="{{ term['name'] }}-frame" src="{{term['roUrl']}}" style="height:100%;width:100%;"></iframe>
+        </div>
+        {% endfor %}
     </div>
-
-
 {% endblock %}
 
 {% block scripts %}
