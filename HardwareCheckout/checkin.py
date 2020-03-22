@@ -23,36 +23,37 @@ def return_device():
     ro_url = content['web_ro']
 
     # TODO This loop is ugly
-    while True:
-        # find the first person in line
-        queuedUser = db.session.query(UserQueue).filter_by(type=current_user.type).order_by(UserQueue.id).first()
-        if queuedUser:
-            # get their user info
-            user = db.session.query(User).filter_by(id=queuedUser.userId).first()
-            # make sure they don't have another device already
-            if user and not user.hasDevice:
-                user.hasDevice = True
-                break
-        else:
-            break
+    # while True:
+    #     # find the first person in line
+    #     queuedUser = db.session.query(UserQueue).filter_by(type=current_user.type).order_by(UserQueue.id).first()
+    #     if queuedUser:
+    #         # get their user info
+    #         user = db.session.query(User).filter_by(id=queuedUser.userId).first()
+    #         # make sure they don't have another device already
+    #         if user and not user.hasDevice:
+    #             user.hasDevice = True
+    #             break
+    #     else:
+    #         break
 
-    queueEntry = db.session.query(DeviceQueue).filter_by(id=current_user.id).first()
+    queueEntry = db.session.query(DeviceQueue).filter_by(device=current_user.id).first()
     if queueEntry:
         queueEntry.webUrl = web_url
         queueEntry.roUrl = ro_url
-        queueEntry.inUse = False
-        queueEntry.inReadyState = queuedUser == True
-        queueEntry.owner = user.id if queuedUser and user else None
-        queueEntry.expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        # queueEntry.inUse = False
+        # queueEntry.inReadyState = queuedUser == True
+        # queueEntry.owner = user.id if queuedUser and user else None
+        # queueEntry.expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
     else:
         # create a device entry for this device
         queueEntry = DeviceQueue(
             webUrl = web_url,
             roUrl = ro_url,
-            inUse = False,
-            inReadyState = queuedUser == True,
-            owner = user.id if queuedUser and user else None,
-            expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
+            device = current_user.id,
+            # inUse = False,
+            # inReadyState = queuedUser == True,
+            # owner = user.id if queuedUser and user else None,
+            # expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
         )
         db.session.add(queueEntry)
         
@@ -63,9 +64,13 @@ def return_device():
 
 @checkin.route("/terminals", methods=["GET"])
 def listTerminals():
-    import pdb
-    pdb.set_trace()
     results = db.session.query(DeviceQueue.roUrl).all()
+    return jsonify(results)
+
+@checkin.route("/terminals/rw", methods=["GET"])
+@roles_required("Admin")
+def listRWTerminals():
+    results = db.session.query(DeviceQueue.webUrl).all()
     return jsonify(results)
 
 # TODO      

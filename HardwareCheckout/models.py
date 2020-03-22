@@ -49,7 +49,7 @@ class DeviceQueue(db.Model):
     inUse = Column(Boolean)
     inReadyState = Column(Boolean)
     expiration = Column(DateTime)
-    owner = Column(Integer, ForeignKey("user.id"))
-    # device = Column(Integer, ForeignKey("user.id"))
+    # owner = Column(Integer, ForeignKey("user.id"))
+    device = Column(Integer, ForeignKey("user.id"))
 
     
