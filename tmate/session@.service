@@ -6,9 +6,9 @@ PartOf=workers.target
 EnvironmentFile=/root/data
 User=villager
 Type=forking
-ExecStart=/root/session.sh %i
+ExecStart=/usr/local/sbin/session.sh %i
 Restart=on-failure
-ExecReload=/root/session_restart.sh %i
+ExecReload=/usr/local/sbin/session_restart.sh %i
 
 [Install]
 WantedBy=multi-user.target
