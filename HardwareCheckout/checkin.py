@@ -60,24 +60,33 @@ def return_device():
     msg['status'] = "success"
 
     return jsonify(msg)
-        
-@checkin.route("/regiser/<device>", methods=["GET"])
-@login_required
-def requestDevice(device):
-    if current_user.hasDevice:
-        return render_template("error.html", error="You already have a device in use.")
+
+@checkin.route("/terminals", methods=["GET"])
+def listTerminals():
+    import pdb
+    pdb.set_trace()
+    results = db.session.query(DeviceQueue.roUrl).all()
+    return jsonify(results)
+
+# TODO      
+# @checkin.route("/regiser/<device>", methods=["GET"])
+# @roles_required("Human")
+# def requestDevice(device):
+#     if current_user:
+#         return render_template("error.html", error="You already have a device in use.")
     
-    # TODO add user to queue
 
-@checkin.route("/queue", methods=["GET"])
-def showQueue():
-    '''
-    This function needs to return the current queue of people and what device they are waiting on
-    '''
-    # TODO check to see if any devices are free
+    
+# TODO
+# @checkin.route("/queue", methods=["GET"])
+# def showQueue():
+#     '''
+#     This function needs to return the current queue of people and what device they are waiting on
+#     '''
+#     # TODO check to see if any devices are free
     
 
-    # TODO figure how why this is broken
-    queueOrder = db.session.query(UserQueue).select_from(User).join(User.id).order_by(UserQueue.id)
+#     # TODO figure how why this is broken
+#     queueOrder = db.session.query(UserQueue).select_from(User).join(User.id).order_by(UserQueue.id)
 
-    return jsonify(queueOrder)
+#     return jsonify(queueOrder)
