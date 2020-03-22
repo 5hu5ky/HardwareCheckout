@@ -15,14 +15,9 @@ def create_app():
     """
     app = Flask(__name__)
 
-    terminal_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config', 'terminals.json')
-    terminals = []
-    with open(terminal_file_path, 'r') as fh:
-        terminals = json.loads(fh.read())
-
     app.config['SECRET_KEY'] = '9OLWxND4o83j4K4iuopO'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-    app.config['TERMINALS'] = terminals
+    app.config['TERMINALS'] = []
 
     db.init_app(app)
 
