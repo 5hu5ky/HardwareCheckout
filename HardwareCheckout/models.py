@@ -10,7 +10,7 @@ class User(db.Model, UserMixin):
     """
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
-    password = Column(String(100), unique=True)
+    password = Column(String(93), unique=True)
     name = Column(String(1000))
     
     #relationships
@@ -44,6 +44,7 @@ class UserQueue(db.Model):
 class DeviceQueue(db.Model):
     __tablename__ = "devicequeue"
     id = Column(Integer, primary_key=True)
+    sshAddr = Column(String(200))
     webUrl = Column(String(200))
     roUrl = Column(String(200))
     inUse = Column(Boolean)
