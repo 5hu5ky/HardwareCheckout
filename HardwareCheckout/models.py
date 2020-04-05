@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     #relationships
     roles = db.relationship('Role', secondary='user_roles')
     userQueueEntry = relationship("UserQueue")
-    deviceQueueEntry = relationship("DeviceQueue")
+    deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
     type = Column(Integer, ForeignKey("devicetype.id"))
 
 class Role(db.Model):
