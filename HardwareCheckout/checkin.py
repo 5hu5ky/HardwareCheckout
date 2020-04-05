@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, request, jsonify
+from flask import Blueprint, render_template, abort, request, jsonify, redirect, url_for
 from flask_login import current_user, login_required
 from flask_user import roles_required
 import datetime 
@@ -63,14 +63,23 @@ def listTerminals():
 def listRWTerminals():
     results = db.session.query(DeviceQueue.webUrl,DeviceQueue.sshAddr).all()
     return jsonify(results)
+ 
+@checkin.route("/register/<device>", methods=["GET"])
+@roles_required("Human")
+def requestDevice(device):
+    devType = db.session.query(DeviceType).filter_by(name=device).first()
+    if not devType:
+        abort(404)
 
-# TODO      
-# @checkin.route("/regiser/<device>", methods=["GET"])
-# @roles_required("Human")
-# def requestDevice(device):
-#     if current_user:
-#         return render_template("error.html", error="You already have a device in use.")
+    if db.session.query(DeviceQueue).filter_by(owner=current_user.id,inUse=True).first():
+        return render_template("error.html", error="You already have a device in use.")
+    
+    if db.session.query(UserQueue).filter_by(userId=current_user.id, type=devType.id).first():
+        return render_template("error.html", error="You already in the queue for {}.".format(devType.name))
 
+    db.session.add(UserQueue(userId=current_user.id, type=devType.id))
+    db.session.commit()
+    return redirect(url_for("main.index"))
 
 @checkin.route("/queue", methods=["GET"])
 def showQueue():
@@ -85,7 +94,7 @@ def showQueue():
         if nextUser:
             device[0].inReadyState = True
             device[0].expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
-            device[0].owner = nextUser.id
+            device[0].owner = nextUser.userId
             db.session.delete(nextUser)
 
     db.session.commit()
