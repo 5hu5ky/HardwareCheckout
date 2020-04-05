@@ -12,6 +12,6 @@ python3 <<EOF
 import requests
 session = requests.session()
 session.post("http://localhost:5000/login", data={'name':'device$1','password':'ASubsfas2341'})
-session.post("http://localhost:5000/checkin", json={'web':'$WEB','web_ro':'$WEB_RO'})
+session.post("http://localhost:5000/checkin", json={'web':'$WEB','web_ro':'$WEB_RO','ssh':'$SSH'})
 
 EOF
