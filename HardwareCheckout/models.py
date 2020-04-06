@@ -10,13 +10,13 @@ class User(db.Model, UserMixin):
     """
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
-    password = Column(String(100), unique=True)
+    password = Column(String(93), unique=True)
     name = Column(String(1000))
     
     #relationships
     roles = db.relationship('Role', secondary='user_roles')
     userQueueEntry = relationship("UserQueue")
-    deviceQueueEntry = relationship("DeviceQueue")
+    deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
     type = Column(Integer, ForeignKey("devicetype.id"))
 
 class Role(db.Model):
@@ -44,12 +44,13 @@ class UserQueue(db.Model):
 class DeviceQueue(db.Model):
     __tablename__ = "devicequeue"
     id = Column(Integer, primary_key=True)
+    sshAddr = Column(String(200))
     webUrl = Column(String(200))
     roUrl = Column(String(200))
     inUse = Column(Boolean)
     inReadyState = Column(Boolean)
     expiration = Column(DateTime)
-    # owner = Column(Integer, ForeignKey("user.id"))
+    owner = Column(Integer, ForeignKey("user.id"))
     device = Column(Integer, ForeignKey("user.id"))
 
     
