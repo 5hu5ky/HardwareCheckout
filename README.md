@@ -20,3 +20,7 @@ A simple website which will facilitate physical hardware checkout
 
 ## Add device
 - `./addDevice.py <device name> <password> <device type>`
+
+# Hardware setup
+- `./tmate/install.sh <hostname or ip of server>`
+
