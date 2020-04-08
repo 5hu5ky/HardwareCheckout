@@ -16,7 +16,7 @@ def create_app():
     """
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', open("../db.key",'r').read())
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../db.key"),'r').read())
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 
     db.init_app(app)
