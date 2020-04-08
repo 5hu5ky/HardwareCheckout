@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from flask_user import roles_required
 import datetime 
 
-from . import db
+from . import db, socketio
 from .models import User, UserQueue, DeviceQueue, DeviceType
 
 checkin = Blueprint('checkin', __name__)
@@ -46,7 +46,12 @@ def return_device():
             # expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
         )
         db.session.add(queueEntry)
-        
+
+    nextUser = db.session.query(UserQueue).filter_by(type=1).first()
+    if nextUser:
+        socketio.send({"message": "device_available", "device": queueEntry.id}, json=True, room=str(nextUser.userId))
+        print("Trying to send message to user %r" % str(nextUser.userId))
+
     db.session.commit()
     msg['status'] = "success"
 
