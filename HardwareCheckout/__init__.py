@@ -28,7 +28,6 @@ def create_app():
     def test_connect():
             if current_user.is_authenticated:
                 join_room(str(current_user.id))
-                print("Connected to room %r" % str(current_user.id))
 
     from .models import User, Role
     UserManager.USER_ENABLE_EMAIL = False

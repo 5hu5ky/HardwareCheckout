@@ -50,7 +50,6 @@ def return_device():
     nextUser = db.session.query(UserQueue).filter_by(type=1).first()
     if nextUser:
         socketio.send({"message": "device_available", "device": queueEntry.id}, json=True, room=str(nextUser.userId))
-        print("Trying to send message to user %r" % str(nextUser.userId))
 
     db.session.commit()
     msg['status'] = "success"
