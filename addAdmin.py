@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from HardwareCheckout.models import User, Role
+from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash
@@ -11,7 +12,7 @@ parser.add_argument("password")
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
-session = sessionmaker(bind=create_engine('sqlite:///HardwareCheckout/db.sqlite'))
+session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
 admin = s.query(Role).filter_by(name="Admin").first()
