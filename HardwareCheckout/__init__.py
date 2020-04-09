@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import current_user, LoginManager
 from flask_user import UserManager
+from flask_socketio import join_room, SocketIO
 import os
 import json
 from .config import db_path
@@ -22,6 +23,13 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
+
+    global socketio
+    socketio = SocketIO(app)
+    @socketio.on('connect')
+    def test_connect():
+            if current_user.is_authenticated:
+                join_room(str(current_user.id))
 
     from .models import User, Role
     UserManager.USER_ENABLE_EMAIL = False

@@ -4,6 +4,7 @@
 <link rel= "stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/term.css') }}">
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="{{ url_for('static',filename='js/term.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
 {% endblock %}
 
 {% block content %}
@@ -45,6 +46,21 @@
         height: 300,
         channel: "carhackingvillage3"
     });
+
+    let socket = io();
+    socket.on("json", function(msg) {
+        if (msg.message == "device_available") {
+            notify("Your device is ready");
+        }
+    });
+
+    function notify(msg) {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(msg);
+        } else {
+            alert(msg);
+        }
+    }
 
 </script>
 {% endblock %}
