@@ -19,9 +19,9 @@ def create_app():
 
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../db.key"),'r').read())
     app.config['SQLALCHEMY_DATABASE_URI'] = db_path
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
-
 
     from .models import User, Role
     UserManager.USER_ENABLE_EMAIL = False
@@ -48,6 +48,3 @@ def create_app():
     app.register_blueprint(checkin_blueprint)
 
     return app
-
-
-
