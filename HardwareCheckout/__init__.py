@@ -5,6 +5,7 @@ from flask_user import UserManager
 from flask_socketio import join_room, SocketIO
 import os
 import json
+from .config import db_path
 
 # init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
@@ -18,7 +19,8 @@ def create_app():
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../db.key"),'r').read())
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../database/db.sqlite')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_path
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
 
@@ -54,6 +56,3 @@ def create_app():
     app.register_blueprint(checkin_blueprint)
 
     return app
-
-
-
