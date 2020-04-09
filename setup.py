@@ -8,13 +8,13 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--clean", help="remove existing database if it exists")
+parser.add_argument("-c", "--clean", help="remove existing database if it exists", action="store_true")
 args = parser.parse_args()
 
 if os.path.isfile(db_path[9:]):
     os.unlink(db_path[9:])
 
-db.create_all(app=create_app(db_path))
+db.create_all(app=create_app())
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
