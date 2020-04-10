@@ -1,9 +1,10 @@
 from base64 import b64decode
 from datetime import datetime, timedelta
+from functools import wraps
 
 from flask import abort, Blueprint, request, Response, session
 from flask_socketio import disconnect, join_room, Namespace, send
-from functools import wraps
+from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
 from . import db, socketio, timer
@@ -16,10 +17,10 @@ def auth_device():
     if 'Authorization' not in request.headers or not request.headers['Authorization'].startswith('Basic '):
         return None
     name, password = b64decode(request.headers['Authorization'][6:]).decode('latin1').split(':', 1)
-    device = DeviceQueue.query.filter_by(name=name).one()
-    if not device or not check_password_hash(device.password, password):
+    try:
+        return DeviceQueue.query.filter_by(name=name).one()
+    except NoResultFound:
         return None
-    return device
 
 
 def device_login_required(func):
