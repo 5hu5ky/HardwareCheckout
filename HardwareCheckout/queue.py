@@ -1,11 +1,20 @@
 from flask import Blueprint
 from flask_login import current_user, login_required
+from flask_socketio import disconnect, join_room, Namespace
 
 from . import db
 from .device import device_ready
 from .models import DeviceQueue, User, UserQueue
 
 queue = Blueprint('queue', __name__)
+
+
+class QueueNamespace(Namespace):
+    def on_connect(self):
+        if current_user.is_authenticated:
+            join_room('user:%i' % current_user.id)
+        else:
+            disconnect()
 
 
 @queue.route('/<id>', methods=['GET'])
