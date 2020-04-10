@@ -17,7 +17,6 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary='user_roles')
     userQueueEntry = relationship("UserQueue")
     deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
-    type = Column(Integer, ForeignKey("devicetype.id"))
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -44,13 +43,15 @@ class UserQueue(db.Model):
 class DeviceQueue(db.Model):
     __tablename__ = "devicequeue"
     id = Column(Integer, primary_key=True)
+    name = Column(String(200), unique=True)
+    password = Column(String(93), unique=True)
     sshAddr = Column(String(200))
     webUrl = Column(String(200))
     roUrl = Column(String(200))
-    inUse = Column(Boolean)
-    inReadyState = Column(Boolean)
+    state = Column(String(200))
     expiration = Column(DateTime)
+    timer = Column(String(200))
     owner = Column(Integer, ForeignKey("user.id"))
-    device = Column(Integer, ForeignKey("user.id"))
+    type = Column(Integer, ForeignKey("devicetype.id"))
 
     

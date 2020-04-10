@@ -31,6 +31,11 @@ def create_app():
             if current_user.is_authenticated:
                 join_room(str(current_user.id))
 
+    from .timer import Timer
+    global timer
+    timer = Timer('/timer')
+    app.register_blueprint(timer, url_prefix='/timer')
+
     from .models import User, Role
     UserManager.USER_ENABLE_EMAIL = False
     user_manager = UserManager(app, db, User)
@@ -54,5 +59,9 @@ def create_app():
     app.register_blueprint(main_blueprint)
     from .checkin import checkin as checkin_blueprint
     app.register_blueprint(checkin_blueprint)
+    from .device import device as device_blueprint
+    app.register_blueprint(device_blueprint, url_prefix='/device')
+    from .queue import queue as queue_blueprint
+    app.register_blueprint(queue_blueprint, url_prefix='/queue')
 
     return app
