@@ -94,5 +94,12 @@ def device_in_use(device):
 
 def device_provisioning(device):
     device.state = 'provisioning'
+    device.expiration = None
     db.session.add(device)
     db.session.commit()
+
+
+def restart_all_timers():
+    for device in DeviceQueue.query:
+        if device.state in ('ready', 'in-queue'):
+            device_ready(device)

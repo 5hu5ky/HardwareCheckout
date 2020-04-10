@@ -59,8 +59,9 @@ def create_app():
     app.register_blueprint(main_blueprint)
     from .checkin import checkin as checkin_blueprint
     app.register_blueprint(checkin_blueprint)
-    from .device import device as device_blueprint
+    from .device import device as device_blueprint, restart_all_timers
     app.register_blueprint(device_blueprint, url_prefix='/device')
+    timer.add_timer(restart_all_timers, 2) # in case app server is restarted, all of these will need to be re-set
     from .queue import queue as queue_blueprint
     app.register_blueprint(queue_blueprint, url_prefix='/queue')
 
