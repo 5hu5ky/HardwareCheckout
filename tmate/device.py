@@ -37,27 +37,42 @@ def device_disconnected():
 def handle_response(data):
     global is_provisioned, error
     print('Received data from server: %r' % data)
-    if 'state' not in data or data[state] not in ('want-provision', 'want-deprovision'):
+    if 'state' not in data or data['state'] not in ('want-provision', 'want-deprovision'):
         return
-    if data[state] == 'want-provision':
+    if data['state'] == 'want-provision':
+        print('Server wants a provision')
         if not is_provisioned:
-            # provision here
-            code = os.system('./provision.sh')
+            print('Provisioning...')
+            #code = os.system('./provision.sh')
+            code = 0
             if code:
                 print('ERROR: provision.sh failed with exit code %d' % code, file=sys.stderr)
-                c.send({'state': 'provision-failed'})
+                send('provision-failed')
                 return
             is_provisioned = True
-        c.send({'state': 'is-provisioned'}, namespace='/device')
-    elif data[state] == 'want-deprovision':
+        else:
+            print('Already provisioned, nothing to do')
+        send('is-provisioned')
+    elif data['state'] == 'want-deprovision':
+        print('Server wants a deprovision')
         if is_provisioned:
-            code = os.system('./deprovision.sh')
+            print('Deprovisioning...')
+            #code = os.system('./deprovision.sh')
+            code = 0
             if code:
                 print('ERROR: deprovision.sh failed with exit code %d' % code, file=sys.stderr)
-                c.send({'state': 'deprovision-failed'})
+                send('deprovision-failed')
                 return
             is_provisioned = False
-        c.send({'state': 'is-deprovisioned'}, namespace='/device')
+        else:
+            print('Already deprovisioned, nothing to do')
+        send('is-deprovisioned')
+
+
+def send(state):
+    data = {'state': state}
+    print('Sending %r to server' % data)
+    c.send({'state': state}, namespace='/device')
 
 
 c.connect('http://localhost:5000', headers=auth_hdr)
