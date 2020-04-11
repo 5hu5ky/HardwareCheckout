@@ -107,12 +107,14 @@ def device_put(device, state, ssh=None, web=None, web_ro=None):
         return {'result', 'success'}
     if device.state in ('provision-failed', 'deprovision-failed'):
         return {'result': 'error', 'error': 'device disabled'}
-    if state not in ('is-provisioned', 'is-deprovisioned'):
+    if state not in ('is-provisioned', 'is-deprovisioned', 'client-connected'):
         return {'result': 'error', 'error': 'invalid state'}, 400
     if state == 'is-provisioned' and device.state == 'want-provision':
         device_ready(device)
     elif state == 'is-deprovisioned' and device.state == 'want-deprovision':
         provision_device(device)
+    elif state == 'client-connected' and device.state == 'in-queue':
+        device_in_use(device, True)
     elif device.state in ('disabled', 'want-deprovision'):
         if state != 'is-deprovisioned':
             send_device_state(device, 'want-deprovision')
