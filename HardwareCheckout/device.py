@@ -172,6 +172,7 @@ def device_in_use(device, reset_timer=False):
     device.state = 'in-use'
     if reset_timer:
         device.expiration = datetime.now() + timedelta(minutes=30)
+        send_device_state(device, 'update-expiration', expiration=device.expiration.timestamp())
     if datetime.now() < device.expiration:
         delta = device.expiration - datetime.now()
         timer.rm_timer(device.timer)
