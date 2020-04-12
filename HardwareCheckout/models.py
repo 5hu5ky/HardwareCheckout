@@ -50,7 +50,6 @@ class DeviceQueue(db.Model):
     roUrl = Column(String(200))
     state = Column(String(200))
     expiration = Column(DateTime)
-    timer = Column(String(200))
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
 

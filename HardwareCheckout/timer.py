@@ -1,38 +1,35 @@
-import os
-from base64 import urlsafe_b64encode
+import heapq
+from datetime import datetime
+from multiprocessing import Process, Queue
+from queue import Empty
 
-from flask import Blueprint
+import requests
 
 
-def Timer(path):
-    timer = Blueprint('timer', __name__)
-    map = {}
-
-    def add_timer(callback, timeout):
-        timeout = int(timeout)
-        key = urlsafe_b64encode(os.urandom(32)).decode('latin-1').rstrip('=')
-        if key in map:
-            raise Exception('random number collision (!)')
-        map[key] = callback
-        if os.system('systemd-run --on-active=%i curl -X POST http://localhost:5000%s/%s' % (timeout, path, key)):
-            del map[key]
-            raise Exception('systemd-run failed')
-        return key
-
-    def rm_timer(key):
+def _background_process(queue):
+    heap = []
+    timeout = None
+    while True:
         try:
-            del map[key]
-        except KeyError:
+            entry = queue.get(True, timeout)
+            heapq.heappush(heap, entry)
+        except Empty:
             pass
+        while heap and datetime.now() >= heap[0][0]:
+            uri = heapq.heappop(heap)[1]
+            requests.post('http://localhost:5000/{}'.format(uri))
+        if heap:
+            timeout = (heap[0][0] - datetime.now()).total_seconds()
+            timeout = 1 if timeout < 1 else timeout
+        else:
+            timeout = None
 
-    @timer.route('/<key>', methods=['POST'])
-    def handle_timer(key):
-        if key in map:
-            callback = map[key]
-            del map[key]
-            callback()
-        return ''
 
-    timer.add_timer = add_timer
-    timer.rm_timer = rm_timer
-    return timer
+class Timer:
+    def __init__(self):
+        self.queue = Queue()
+        self.process = Process(target=_background_process, args=(self.queue,), daemon=True)
+        self.process.start()
+
+    def add_timer(self, uri, timestamp):
+        self.queue.put((timestamp, uri))

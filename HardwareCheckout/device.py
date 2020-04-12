@@ -125,15 +125,15 @@ def device_put(device, state, ssh=None, web=None, web_ro=None):
     return {'result': 'success'}
 
 
+@device.route('/timer/<device_id>', methods=['POST'])
 def state_callback(device_id):
-    def callback():
-        device = DeviceQueue.query.filter_by(id=device_id).one()
-        {
-            'ready': device_ready,
-            'in-queue': device_in_queue,
-            'in-use': device_in_use
-        }[device.state](device)
-    return callback
+    device = DeviceQueue.query.filter_by(id=device_id).one()
+    {
+        'ready': device_ready,
+        'in-queue': device_in_queue,
+        'in-use': device_in_use
+    }[device.state](device)
+    return '', 204
 
 
 def device_ready(device):
@@ -153,17 +153,11 @@ def device_in_queue(device, next_user=None):
     if next_user is not None:
         device.owner = next_user.id
         device.expiration = datetime.now() + timedelta(minutes=5)
+        timer.add_timer('/device/timer/{:d}'.format(device.id), device.expiration)
         send_message_to_owner(device, 'device_available')
     db.session.add(device)
     db.session.commit()
-    if datetime.now() < device.expiration:
-        delta = device.expiration - datetime.now()
-        timer.rm_timer(device.timer)
-        device.timer = timer.add_timer(state_callback(device.id), delta.total_seconds() + 1)
-        db.session.add(device)
-        db.session.commit()
-        return
-    else:
+    if datetime.now() >= device.expiration:
         send_message_to_owner(device, 'device_lost')
         return deprovision_device(device)
 
@@ -172,15 +166,9 @@ def device_in_use(device, reset_timer=False):
     device.state = 'in-use'
     if reset_timer:
         device.expiration = datetime.now() + timedelta(minutes=30)
+        timer.add_timer('/device/timer/{:d}'.format(device.id), device.expiration)
         send_device_state(device, 'update-expiration', expiration=device.expiration.timestamp())
-    if datetime.now() < device.expiration:
-        delta = device.expiration - datetime.now()
-        timer.rm_timer(device.timer)
-        device.timer = timer.add_timer(state_callback(device.id), delta.total_seconds() + 1)
-        db.session.add(device)
-        db.session.commit()
-        return
-    else:
+    if datetime.now() >= device.expiration:
         send_message_to_owner(device, 'device_reclaimed')
         return deprovision_device(device)
 
@@ -188,7 +176,6 @@ def device_in_use(device, reset_timer=False):
 def deprovision_device(device):
     device.state = 'want-deprovision'
     device.expiration = None
-    timer.rm_timer(device.timer)
     db.session.add(device)
     db.session.commit()
     send_device_state(device, 'want-deprovision')
@@ -197,7 +184,6 @@ def deprovision_device(device):
 def provision_device(device):
     device.state = 'want-provision'
     device.expiration = None
-    timer.rm_timer(device.timer)
     db.session.add(device)
     db.session.commit()
     send_device_state(device, 'want-provision')
@@ -212,6 +198,7 @@ def send_message_to_owner(device, message):
     return socketio.send({'message': message, 'device': device.type}, json=True, namespace='/queue', room='user:%i' % device.owner)
 
 
+@device.route('/timer', methods=['POST'])
 def restart_all_timers():
     for device in DeviceQueue.query:
         if device.state in ('ready', 'in-queue', 'in-use'):
@@ -220,3 +207,4 @@ def restart_all_timers():
                 'in-queue': device_in_queue,
                 'in-use': device_in_use
             }[device.state](device)
+    return '', 204

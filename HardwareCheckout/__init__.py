@@ -5,6 +5,7 @@ from flask_user import UserManager
 from flask_socketio import SocketIO
 import os
 import json
+from datetime import datetime, timedelta
 from .config import db_path
 
 # init SQLAlchemy so we can use it later in our models
@@ -29,8 +30,7 @@ def create_app():
 
     from .timer import Timer
     global timer
-    timer = Timer('/timer')
-    app.register_blueprint(timer, url_prefix='/timer')
+    timer = Timer()
 
     from .models import User, Role
     UserManager.USER_ENABLE_EMAIL = False
@@ -58,7 +58,7 @@ def create_app():
     from .device import device as device_blueprint, restart_all_timers, DeviceNamespace
     app.register_blueprint(device_blueprint, url_prefix='/device')
     socketio.on_namespace(DeviceNamespace('/device'))
-    timer.add_timer(restart_all_timers, 2) # in case app server is restarted, all of these will need to be re-set
+    timer.add_timer('/device/timer', datetime.now() + timedelta(seconds=2))
     from .queue import queue as queue_blueprint, QueueNamespace
     app.register_blueprint(queue_blueprint, url_prefix='/queue')
     socketio.on_namespace(QueueNamespace('/queue'))
