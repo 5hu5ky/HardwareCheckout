@@ -4,10 +4,9 @@ PartOf=workers.target
 
 [Service]
 User=villager
-Type=forking
-ExecStart=/usr/local/sbin/session.sh %i
+Type=simple
+ExecStart=/usr/bin/env python3 /opt/hc-client/device.py %i
 Restart=on-failure
-ExecReload=/usr/local/sbin/session_restart.sh %i
 
 [Install]
 WantedBy=multi-user.target
