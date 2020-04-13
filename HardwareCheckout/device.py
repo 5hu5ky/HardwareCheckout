@@ -120,7 +120,7 @@ def device_put(device, state, ssh=None, web=None, web_ro=None):
             send_device_state(device, 'want-deprovision')
         else:
             return {'result': 'success'}
-    elif state != 'is-provisioned':
+    elif state not in ('is-provisioned', 'client-connected'):
         send_device_state(device, 'want-provision')
     return {'result': 'success'}
 
@@ -168,6 +168,8 @@ def device_in_use(device, reset_timer=False):
         device.expiration = datetime.now() + timedelta(minutes=30)
         timer.add_timer('/device/timer/{:d}'.format(device.id), device.expiration)
         send_device_state(device, 'update-expiration', expiration=device.expiration.timestamp())
+    db.session.add(device)
+    db.session.commit()
     if datetime.now() >= device.expiration:
         send_message_to_owner(device, 'device_reclaimed')
         return deprovision_device(device)

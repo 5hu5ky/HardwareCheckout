@@ -20,7 +20,7 @@ def index():
         results = db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).all()
         show_streams = False
     else:
-        results = db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).all()
+        results = db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
         show_streams = True
 
     return render_template('index.html', terminals=results, show_streams=show_streams)
