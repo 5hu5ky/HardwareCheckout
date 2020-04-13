@@ -17,7 +17,7 @@ def index():
     """
 
     if not current_user.is_anonymous and current_user.has_roles("Admin"):
-        results = db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).all()
+        results = db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
         show_streams = False
     else:
         results = db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
