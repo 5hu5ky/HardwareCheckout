@@ -30,6 +30,7 @@ s.add(
             args.password, 
             method="pbkdf2:sha256:45000"
         ),
+        state="want-provision",
         type=typeID.id
     )
 )
