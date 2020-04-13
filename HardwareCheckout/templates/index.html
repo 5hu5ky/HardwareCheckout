@@ -47,7 +47,7 @@
         channel: "carhackingvillage3"
     });
 
-    let socket = io();
+    let socket = io("/queue");
     socket.on("json", function(msg) {
         if (msg.message == "device_available") {
             notify("Your device is ready");

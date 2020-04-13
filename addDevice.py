@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from HardwareCheckout import db, create_app
-from HardwareCheckout.models import User, Role, DeviceType
+from HardwareCheckout.models import DeviceQueue, Role, DeviceType
 from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -24,13 +24,13 @@ if not typeID:
     exit(1)
 
 s.add(
-    User(
+    DeviceQueue(
         name=args.username, 
         password=generate_password_hash(
             args.password, 
             method="pbkdf2:sha256:45000"
         ),
-        roles=[device],
+        state="want-provision",
         type=typeID.id
     )
 )

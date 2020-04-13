@@ -2,9 +2,10 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import current_user, LoginManager
 from flask_user import UserManager
-from flask_socketio import join_room, SocketIO
+from flask_socketio import SocketIO
 import os
 import json
+from datetime import datetime, timedelta
 from .config import db_path
 
 # init SQLAlchemy so we can use it later in our models
@@ -26,10 +27,10 @@ def create_app():
 
     global socketio
     socketio = SocketIO(app)
-    @socketio.on('connect')
-    def test_connect():
-            if current_user.is_authenticated:
-                join_room(str(current_user.id))
+
+    from .timer import Timer
+    global timer
+    timer = Timer()
 
     from .models import User, Role
     UserManager.USER_ENABLE_EMAIL = False
@@ -54,5 +55,12 @@ def create_app():
     app.register_blueprint(main_blueprint)
     from .checkin import checkin as checkin_blueprint
     app.register_blueprint(checkin_blueprint)
+    from .device import device as device_blueprint, restart_all_timers, DeviceNamespace
+    app.register_blueprint(device_blueprint, url_prefix='/device')
+    socketio.on_namespace(DeviceNamespace('/device'))
+    timer.add_timer('/device/timer', datetime.now() + timedelta(seconds=2))
+    from .queue import queue as queue_blueprint, QueueNamespace
+    app.register_blueprint(queue_blueprint, url_prefix='/queue')
+    socketio.on_namespace(QueueNamespace('/queue'))
 
     return app

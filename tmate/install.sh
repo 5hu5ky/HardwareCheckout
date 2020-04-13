@@ -6,18 +6,15 @@ fi
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
-pip3 install requests
+pip3 install -r $SCRIPTPATH/requirements.txt
 
-if [ -f $SCRIPTPATH/session.sh.bak ]; then
-    mv $SCRIPTPATH/session.sh.bak $SCRIPTPATH/session.sh
-fi
+sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/device.py
+sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/connected.py
 
-sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/session.sh
+sudo install -m 755 -d /opt/hc-client
+sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
+sudo install -m 644 $SCRIPTPATH/{session.target,session@.service} /etc/systemd/system
 
-sudo cp $SCRIPTPATH/{session.sh,session_restart.sh} /usr/local/sbin
-sudo cp $SCRIPTPATH/session.target /etc/systemd/system/
-sudo cp $SCRIPTPATH/session@.service /lib/systemd/system/
-sudo cp $SCRIPTPATH/autologout.sh /etc/profile.d/autologout.sh
 sudo systemctl daemon-reload
 sudo systemctl start session.target
 sudo systemctl enable session.target
