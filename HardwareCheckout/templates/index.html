@@ -9,6 +9,21 @@
 
 {% block content %}
     <div class="container">
+        <div id="devices" class="content" style="display: {{ 'block' if devices else 'none' }}">
+            <h6>Devices available:</h6>
+            <ul>
+                {% for device in devices %}
+                <li>
+                    {{ device['name'] }}
+                    <ul>
+                        <li>SSH: {{ device['sshAddr'] }}</li>
+                        <li>Web: <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></li>
+                    </ul>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
         {% if show_streams %}
         <div class="columns">
             <div id="stream-1" class="column"></div>
