@@ -8,7 +8,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
 from . import db, socketio, timer
-from .models import DeviceQueue, UserQueue
+from .models import DeviceQueue, DeviceType, UserQueue
 
 device = Blueprint('device', __name__)
 
@@ -197,7 +197,8 @@ def send_device_state(device, state, **kwargs):
 
 
 def send_message_to_owner(device, message):
-    return socketio.send({'message': message, 'device': device.type}, json=True, namespace='/queue', room='user:%i' % device.owner)
+    name = DeviceType.query.filter_by(id=device.type).one().name
+    return socketio.send({'message': message, 'device': name}, json=True, namespace='/queue', room='user:%i' % device.owner)
 
 
 @device.route('/timer', methods=['POST'])
