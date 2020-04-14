@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from flask_user import roles_required
 import datetime 
 
-from . import db
+from . import db, socketio
 from .models import User, UserQueue, DeviceQueue, DeviceType
 
 checkin = Blueprint('checkin', __name__)
@@ -46,7 +46,11 @@ def return_device():
             # expiration = datetime.datetime.now() + datetime.timedelta(minutes=5),
         )
         db.session.add(queueEntry)
-        
+
+    nextUser = db.session.query(UserQueue).filter_by(type=1).first()
+    if nextUser:
+        socketio.send({"message": "device_available", "device": queueEntry.id}, json=True, room=str(nextUser.userId))
+
     db.session.commit()
     msg['status'] = "success"
 
@@ -80,24 +84,3 @@ def requestDevice(device):
     db.session.add(UserQueue(userId=current_user.id, type=devType.id))
     db.session.commit()
     return redirect(url_for("main.index"))
-
-@checkin.route("/queue", methods=["GET"])
-def showQueue():
-    '''
-    This function needs to return the current queue of people and what device they are waiting on
-    '''
-    # TODO check to see if any devices are free
-    # find the first person in line
-    freeDevices = db.session.query(DeviceQueue, DeviceType.id).select_from(DeviceQueue).filter_by(inUse=False,inReadyState=False).all()
-    for device in freeDevices:
-        nextUser = db.session.query(UserQueue).filter_by(type=device[1]).first()
-        if nextUser:
-            device[0].inReadyState = True
-            device[0].expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
-            device[0].owner = nextUser.userId
-            db.session.delete(nextUser)
-
-    db.session.commit()
-    queueOrder = db.session.query(User.name).join(UserQueue).all()
-
-    return jsonify(queueOrder)

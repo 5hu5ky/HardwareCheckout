@@ -20,6 +20,7 @@ session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
 
+
 def deviceAdd(username, password, devtype):
     device = s.query(Role).filter_by(name="Device").first()
     typeID = s.query(DeviceType).filter_by(name=devtype).first()
@@ -37,7 +38,6 @@ def deviceAdd(username, password, devtype):
         ),
         state="want-provision",
         type=typeID.id
-    )
     )
     s.commit()
 

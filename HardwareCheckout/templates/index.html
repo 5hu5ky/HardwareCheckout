@@ -4,15 +4,49 @@
 <link rel= "stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/term.css') }}">
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="{{ url_for('static',filename='js/term.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
 {% endblock %}
 
 {% block content %}
     <div class="container">
+        <div id="devices" class="content" style="display: {{ 'block' if devices else 'none' }}">
+            <h6>Devices available:</h6>
+            <ul>
+                {% for device in devices %}
+                <li>
+                    {{ device['name'] }}
+                    <ul>
+                        <li>SSH: {{ device['sshAddr'] }}</li>
+                        <li>Web: <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></li>
+                    </ul>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="content">
+            <h6>Devices</h6>
+            <div style="display: flex">
+                {% for queue in queues %}
+                <div style="border: 1px solid black; width: 300px; float: left">
+                    <form action="/queue/{{ queue['id'] }}" method="POST">
+                    {{ queue['name'] }}
+                    <br>
+                    {{ queue['size'] }} in queue.
+                    <input type="submit" value="Join Queue">
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if show_streams %}
         <div class="columns">
             <div id="stream-1" class="column"></div>
             <div id="stream-2" class="column"></div>
             <div id="stream-3" class="column"></div>
         </div>
+        {% endif %}
 
         <div class="tab">
             {% for term in terminals %}
@@ -45,6 +79,52 @@
         height: 300,
         channel: "carhackingvillage3"
     });
+
+    let socket = io("/queue");
+    socket.on("json", function(msg) {
+        if (msg.message == "device_available") {
+            notify("Your device " + msg.device + " is ready. You have five minutes to log in before the device becomes available to the next person in the queue.");
+        } else if (msg.message == "device_lost") {
+            notify("Your login time for device " + msg.device + " has expired. You may re-enter the queue to try again.");
+        } else if (msg.message == "device_reclaimed") {
+            notify("Thank you for participating in the virtual CHV CTF. If you would like more time, you may enter the queue again.");
+        }
+        get_devices().catch(e => location.reload());
+    });
+
+    function notify(msg) {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(msg);
+        } else {
+            alert(msg);
+        }
+    }
+
+    async function get_devices() {
+        let response = await fetch("/user/device");
+        let json = await response.json();
+        let domDevices = document.getElementById("devices");
+        let domList = domDevices.querySelector("ul");
+        domList.innerHTML = "";
+        domDevices.style.display = json.result.length === 0 ? "none" : "block";
+        for (let device of json.result) {
+            let li = document.createElement("li");
+            li.innerText = device.name;
+            let ul = document.createElement("ul");
+            let domSSH = document.createElement("li");
+            domSSH.innerText = "SSH: " + device.sshAddr;
+            let domWeb = document.createElement("li");
+            let domWebLink = document.createElement("a");
+            domWebLink.href = device.webUrl;
+            domWebLink.innerText = device.webUrl;
+            domWeb.innerText = "Web: ";
+            domWeb.appendChild(domWebLink);
+            ul.appendChild(domSSH);
+            ul.appendChild(domWeb);
+            li.appendChild(ul);
+            domList.appendChild(li);
+        }
+    }
 
 </script>
 {% endblock %}
