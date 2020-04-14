@@ -2,11 +2,19 @@
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <URL> <Device Name>"
+    exit 1
 fi
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
 pip3 install -r $SCRIPTPATH/requirements.txt
+
+if [ -f $SCRIPTPATH/device.py.bak ]; then
+    mv $SCRIPTPATH/device.py.bak $SCRIPTPATH/device.py
+fi
+if [ -f $SCRIPTPATH/connected.py.bak ]; then
+    mv $SCRIPTPATH/connected.py.bak $SCRIPTPATH/connected.py
+fi
 
 sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/device.py
 sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/connected.py
