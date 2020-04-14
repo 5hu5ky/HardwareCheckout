@@ -24,6 +24,22 @@
             </ul>
         </div>
 
+        <div class="content">
+            <h6>Devices</h6>
+            <div style="display: flex">
+                {% for queue in queues %}
+                <div style="border: 1px solid black; width: 300px; float: left">
+                    <form action="/queue/{{ queue['id'] }}" method="POST">
+                    {{ queue['name'] }}
+                    <br>
+                    {{ queue['size'] }} in queue.
+                    <input type="submit" value="Join Queue">
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
         {% if show_streams %}
         <div class="columns">
             <div id="stream-1" class="column"></div>
