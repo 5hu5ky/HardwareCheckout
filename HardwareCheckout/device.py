@@ -40,7 +40,10 @@ def auth_device():
         return None
     name, password = b64decode(request.headers['Authorization'][6:]).decode('latin1').split(':', 1)
     try:
-        return DeviceQueue.query.filter_by(name=name).one()
+        device = DeviceQueue.query.filter_by(name=name).one()
+        if not check_password_hash(device.password, password):
+            return None
+        return device
     except NoResultFound:
         return None
 
