@@ -157,6 +157,6 @@ def send(state, **kwargs):
     c.send(kwargs, namespace='/device')
 
 
-c.connect('http://localhost:5000', headers=auth_hdr)
+c.connect('https://localhost:5000', headers=auth_hdr)
 c.wait()
 sys.exit(error)
