@@ -62,5 +62,7 @@ def create_app():
     from .queue import queue as queue_blueprint, QueueNamespace
     app.register_blueprint(queue_blueprint, url_prefix='/queue')
     socketio.on_namespace(QueueNamespace('/queue'))
+    from .user import user as user_blueprint
+    app.register_blueprint(user_blueprint, url_prefix='/user')
 
     return app

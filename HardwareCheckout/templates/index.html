@@ -73,6 +73,7 @@
         } else if (msg.message == "device_reclaimed") {
             notify("Thank you for participating in the virtual CHV CTF. If you would like more time, you may enter the queue again.");
         }
+        get_devices().catch(e => location.reload());
     });
 
     function notify(msg) {
@@ -80,6 +81,32 @@
             new Notification(msg);
         } else {
             alert(msg);
+        }
+    }
+
+    async function get_devices() {
+        let response = await fetch("/user/device");
+        let json = await response.json();
+        let domDevices = document.getElementById("devices");
+        let domList = domDevices.querySelector("ul");
+        domList.innerHTML = "";
+        domDevices.style.display = json.result.length === 0 ? "none" : "block";
+        for (let device of json.result) {
+            let li = document.createElement("li");
+            li.innerText = device.name;
+            let ul = document.createElement("ul");
+            let domSSH = document.createElement("li");
+            domSSH.innerText = "SSH: " + device.sshAddr;
+            let domWeb = document.createElement("li");
+            let domWebLink = document.createElement("a");
+            domWebLink.href = device.webUrl;
+            domWebLink.innerText = device.webUrl;
+            domWeb.innerText = "Web: ";
+            domWeb.appendChild(domWebLink);
+            ul.appendChild(domSSH);
+            ul.appendChild(domWeb);
+            li.appendChild(ul);
+            domList.appendChild(li);
         }
     }
 

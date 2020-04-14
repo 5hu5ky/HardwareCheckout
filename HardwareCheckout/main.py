@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template
 from flask import current_app as app
 from flask_login import current_user
-from sqlalchemy import or_
 
 from . import db, create_app
 from .models import DeviceQueue, DeviceType, User
+from .user import get_devices
 
 main = Blueprint('main', __name__)
 
@@ -25,7 +25,7 @@ def index():
         show_streams = True
 
     if not current_user.is_anonymous:
-        devices = db.session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == current_user.id).all()
+        devices = get_devices()['result']
     else:
         devices = []
 
