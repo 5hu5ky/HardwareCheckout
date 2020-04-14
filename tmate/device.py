@@ -11,7 +11,7 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 config = ConfigParser()
-config.read('config.ini')
+config.read('/opt/hc-client/.config.ini')
 
 try:
     config = config[sys.argv[1]]
