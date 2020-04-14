@@ -8,7 +8,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
 from . import db, socketio, timer
-from .models import DeviceQueue, UserQueue
+from .models import DeviceQueue, DeviceType, UserQueue
 
 device = Blueprint('device', __name__)
 
@@ -120,7 +120,7 @@ def device_put(device, state, ssh=None, web=None, web_ro=None):
             send_device_state(device, 'want-deprovision')
         else:
             return {'result': 'success'}
-    elif state != 'is-provisioned':
+    elif state not in ('is-provisioned', 'client-connected'):
         send_device_state(device, 'want-provision')
     return {'result': 'success'}
 
@@ -168,6 +168,8 @@ def device_in_use(device, reset_timer=False):
         device.expiration = datetime.now() + timedelta(minutes=30)
         timer.add_timer('/device/timer/{:d}'.format(device.id), device.expiration)
         send_device_state(device, 'update-expiration', expiration=device.expiration.timestamp())
+    db.session.add(device)
+    db.session.commit()
     if datetime.now() >= device.expiration:
         send_message_to_owner(device, 'device_reclaimed')
         return deprovision_device(device)
@@ -195,7 +197,8 @@ def send_device_state(device, state, **kwargs):
 
 
 def send_message_to_owner(device, message):
-    return socketio.send({'message': message, 'device': device.type}, json=True, namespace='/queue', room='user:%i' % device.owner)
+    name = DeviceType.query.filter_by(id=device.type).one().name
+    return socketio.send({'message': message, 'device': name}, json=True, namespace='/queue', room='user:%i' % device.owner)
 
 
 @device.route('/timer', methods=['POST'])
