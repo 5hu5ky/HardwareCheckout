@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [[ $# -ne 1 ]]; then
-    echo "Usage: $0 <URL>"
+if [[ $# -ne 2 ]]; then
+    echo "Usage: $0 <URL> <Device Name>"
 fi
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -14,6 +14,8 @@ sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/connected.py
 sudo install -m 755 -d /opt/hc-client
 sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
 sudo install -m 644 $SCRIPTPATH/{session.target,session@.service} /etc/systemd/system
+
+sudo $SCRIPTPATH/create_config.py $2 6
 
 sudo systemctl daemon-reload
 sudo systemctl start session.target
