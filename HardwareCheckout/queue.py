@@ -1,10 +1,11 @@
 from flask import Blueprint
 from flask_login import current_user, login_required
 from flask_socketio import disconnect, join_room, Namespace
+from sqlalchemy import func
 
 from . import db
 from .device import device_ready
-from .models import DeviceQueue, User, UserQueue
+from .models import DeviceQueue, DeviceType, User, UserQueue
 
 queue = Blueprint('queue', __name__)
 
@@ -15,6 +16,11 @@ class QueueNamespace(Namespace):
             join_room('user:%i' % current_user.id)
         else:
             disconnect()
+
+
+@queue.route('/', methods=['GET'])
+def list_queues():
+    return {'result': [{'id': id, 'name': name, 'size': size} for id, name, size in db.session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name)]}
 
 
 @queue.route('/<id>', methods=['GET'])

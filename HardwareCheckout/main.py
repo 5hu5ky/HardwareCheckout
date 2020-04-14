@@ -29,7 +29,8 @@ def index():
     else:
         devices = []
 
-    return render_template('index.html', devices=devices, terminals=results, show_streams=show_streams)
+    from .queue import list_queues
+    return render_template('index.html', devices=devices, queues=list_queues()['result'], terminals=results, show_streams=show_streams)
 
 
 if __name__ == '__main__':
