@@ -14,7 +14,7 @@ parser = ArgumentParser()
 parser.add_argument('-u', '--username', dest='username', required=False)
 parser.add_argument('-p','--password', dest='password', required=False)
 parser.add_argument('-t', '--type', dest='devtype', required=False)
-parser.add_argument('-i', '--init', help='Init file containing list of users', dest='initfile', required=False)
+parser.add_argument('-i', '--ini', help='Ini file containing list of users', dest='inifile', required=False)
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
@@ -72,33 +72,33 @@ def csvParse(csvPath):
                 else:
                     result.append(components)
         except:
-            print("Couldn't read {}, {}".format(args.initfile))
+            print("Couldn't read {}, {}".format(args.inifile))
             exit(1)
             
     return result
 
 def printHelp():
     print("Adding multiple devices:")
-    print("python3 addDevice.py -i <path/to/initfile> -t <devicetype>")
+    print("python3 addDevice.py -i <path/to/inifile> -t <devicetype>")
     print()
     print("Add a single device:")
     print("python3 addDevice.py -u <devicename> -p <password> -t <devicetype>")
     exit(1)
     
 def main():
-    if args.initfile and (args.username or args.password) and not args.devtype:
-        print ("You cannot define username, password, but must define device type when you define a init file!!")
+    if args.inifile and (args.username or args.password) and not args.devtype:
+        print ("You cannot define username, password, but must define device type when you define a ini file!!")
     elif args.username and args.password and args.devtype:
         deviceAdd(args.username,args.password,args.devtype)
     else:
-        if not args.initfile or not args.devtype:
+        if not args.inifile or not args.devtype:
             printHelp()
-        if not os.path.isfile(args.initfile):
-            print ("Init file {} doesn't exist!".format(args.initfile))
+        if not os.path.isfile(args.inifile):
+            print ("Ini file {} doesn't exist!".format(args.inifile))
             exit(1)
         # for parsing csv files replace this with
         # csvParse(csvPath) --> Note that csvParse expects device type in the file
-        users = iniParse(args.initfile, args.devtype) 
+        users = iniParse(args.inifile, args.devtype) 
         
         for user in users:
             deviceAdd(user[0],user[1],user[2])
