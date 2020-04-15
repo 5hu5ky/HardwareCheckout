@@ -21,7 +21,6 @@ args = parser.parse_args()
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
-config_sections = ["device1","device2","device3","device4","device5","device6"]
 
 def deviceAdd(username, password, devtype):
     device = s.query(Role).filter_by(name="Device").first()
@@ -50,13 +49,8 @@ def iniParse(confPath, devType):
     config.read(confPath)
     result = []
     
-    #validate config sections
-    for item in config_sections:
-        if item not in config:
-            print ("Malformed config file - missing {}".format(item))
-            exit(1)
     
-    for item in config_sections:
+    for item in config.sections():
         innerList = []
         innerList.append(config[item]["username"])
         innerList.append(config[item]["password"])
@@ -77,8 +71,8 @@ def csvParse(csvPath):
                     exit(1)
                 else:
                     result.append(components)
-        except Exception as e:
-            print("Couldn't read {}, {}".format(args.initfile, e))
+        except:
+            print("Couldn't read {}, {}".format(args.initfile))
             exit(1)
             
     return result
