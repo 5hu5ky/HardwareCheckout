@@ -1,7 +1,9 @@
-from sqlalchemy import Table, Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import func, or_
 from sqlalchemy.orm import relationship
 # from . import db
 from .config import db_path
+from tornado_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy(url=db_path)
 
@@ -15,25 +17,32 @@ class User(db.Model):
     name = Column(String(1000))
     
     #relationships
-    roles = db.relationship('Role', secondary='user_roles')
+    roles = relationship('Role', secondary='user_roles')
     userQueueEntry = relationship("UserQueue")
     deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
 
+    def get_owned_devices(self):
+        return db.session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == self.id)
+
 class Role(db.Model):
     __tablename__ = 'roles'
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50), unique=True)
+    id = Column(Integer(), primary_key=True)
+    name = Column(String(50), unique=True)
 
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
-    role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
+    id = Column(Integer(), primary_key=True)
+    user_id = Column(Integer(), ForeignKey('user.id', ondelete='CASCADE'))
+    role_id = Column(Integer(), ForeignKey('roles.id', ondelete='CASCADE'))
 
 class DeviceType(db.Model):
     __tablename__ = "devicetype"
     id = Column(Integer, primary_key=True)
     name = Column(String(250), unique=True)
+
+    @staticmethod
+    def get_queues():
+        return db.session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name)
 
 class UserQueue(db.Model):
     __tablename__ = "userqueue"
@@ -54,4 +63,10 @@ class DeviceQueue(db.Model):
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
 
-    
+    @staticmethod
+    def get_all_web_urls():
+        return db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use')
+
+    @staticmethod
+    def get_all_ro_urls():
+        return db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
