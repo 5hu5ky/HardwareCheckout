@@ -1,10 +1,11 @@
-from flask_user import UserMixin
 from sqlalchemy import Table, Column, Integer, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from . import db
+# from . import db
+from .config import db_path
 
+db = SQLAlchemy(url=db_path)
 
-class User(db.Model, UserMixin):
+class User(db.Model):
     """
     Suuuuper basic User model, this will almost certainly need to be updated.
     """
