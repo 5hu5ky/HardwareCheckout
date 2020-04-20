@@ -1,37 +1,33 @@
-from flask import Blueprint, render_template
-from flask import current_app as app
-from flask_login import current_user
+# from tornado.web import
 
-from . import db, create_app
-from .models import DeviceQueue, DeviceType, User
+from .auth import Handler 
+from .models import DeviceQueue, DeviceType, User, db
 from .user import get_devices
+from .blueprint import Blueprint
 
-main = Blueprint('main', __name__)
+main = Blueprint()
 
 
-@main.route('/')
-def index():
-    """
-    Home path for the site
+@main.route('/', name="main")
+class MainHandler(Handler):
+    def get(self):
+        """
+        Home path for the site
 
-    :return:
-    """
-
-    if not current_user.is_anonymous and current_user.has_roles("Admin"):
-        results = db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
-        show_streams = False
-    else:
+        :return:
+        """
+        # TODO
+        # if not current_user.is_anonymous and current_user.has_roles("Admin"):
+        #     results = db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
+        #     show_streams = False
+        # else: 
         results = db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
         show_streams = True
-
-    if not current_user.is_anonymous:
         devices = get_devices()['result']
-    else:
-        devices = []
 
-    from .queue import list_queues
-    return render_template('index.html', devices=devices, queues=list_queues()['result'], terminals=results, show_streams=show_streams)
+        from .queue import list_queues
+        return self.render('index.html', devices=devices, queues=list_queues()['result'], terminals=results, show_streams=show_streams)
 
 
 if __name__ == '__main__':
-    create_app()
+    

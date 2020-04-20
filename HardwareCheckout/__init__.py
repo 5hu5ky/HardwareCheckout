@@ -7,8 +7,6 @@ from .config import db_path
 
 # init SQLAlchemy so we can use it later in our models
 
-
-
 def create_app():
     """
 
@@ -21,6 +19,7 @@ def create_app():
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
         template_path="templates/",
         db=SQLAlchemy(url=db_path),
+        # xsrf_cookies=True,  #TODO
     )
 
     global socketio
