@@ -4,9 +4,13 @@ from .webutil import Blueprint, noself, UserBaseHandler
 main = Blueprint()
 
 
-@main.route('/', name='main')
-class IndexHandler(UserBaseHandler):
+@main.route('/', name="main")
+class MainHandler(UserBaseHandler):
     def get(self):
+        """
+        Home path for the site
+        :return:
+        """
         if self.current_user and self.current_user.has_roles('Admin'):
             terminals = DeviceQueue.get_all_web_urls(self.session)
             show_streams = False
