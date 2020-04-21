@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block head %}
-<link rel= "stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/term.css') }}">
+<link rel= "stylesheet" type= "text/css" href="{{ static_url('styles/term.css') }}">
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
-<script src="{{ url_for('static',filename='js/term.js') }}"></script>
+<script src="{{ static_url('js/term.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
 {% end %}
 

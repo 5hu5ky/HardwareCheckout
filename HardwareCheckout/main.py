@@ -17,5 +17,5 @@ class IndexHandler(UserBaseHandler):
             devices = self.current_user.get_owned_devices(self.session)
         else:
             devices = []
-        queues = DeviceType.get_queues(self.session)
+        queues = [{'id': id, 'name': name, 'size': count} for id, name, count in DeviceType.get_queues(self.session)]
         self.render('index.html', **noself(locals()))
