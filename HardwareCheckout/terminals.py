@@ -13,7 +13,7 @@ class ROTerminalHandler(UserBaseHandler):
     @authenticated
     async def get(self):
         with self.make_session() as session:
-            results = as_future(session.query(DeviceQueue.roUrl).all)
+            results = DeviceQueue.get_all_ro_urls(session)
         self.write({"urls":results})
 
 @terms.route("/terminals/rw")
