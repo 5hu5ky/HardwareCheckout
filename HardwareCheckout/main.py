@@ -12,15 +12,16 @@ class MainHandler(UserBaseHandler):
 
         :return:
         """
-        if self.current_user and self.current_user.has_roles('Admin'):
-            terminals = DeviceQueue.get_all_web_urls(self.session)
-            show_streams = False
-        else:
-            terminals = DeviceQueue.get_all_ro_urls(self.session)
-            show_streams = True
-        if self.current_user:
-            devices = self.current_user.get_owned_devices(self.session)
-        else:
-            devices = []
-        queues = [{'id': id, 'name': name, 'size': count} for id, name, count in DeviceType.get_queues(self.session)]
+        with self.make_session() as session:
+            if self.current_user and self.current_user.has_roles('Admin'):
+                terminals = DeviceQueue.get_all_web_urls(session)
+                show_streams = False
+            else:
+                terminals = DeviceQueue.get_all_ro_urls(session)
+                show_streams = True
+            if self.current_user:
+                devices = self.current_user.get_owned_devices(session)
+            else:
+                devices = []
+            queues = [{'id': id, 'name': name, 'size': count} for id, name, count in DeviceType.get_queues(session)]
         self.render('index.html', **noself(locals()))
