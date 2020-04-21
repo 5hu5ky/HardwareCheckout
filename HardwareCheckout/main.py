@@ -9,6 +9,7 @@ class MainHandler(UserBaseHandler):
     def get(self):
         """
         Home path for the site
+
         :return:
         """
         if self.current_user and self.current_user.has_roles('Admin'):
