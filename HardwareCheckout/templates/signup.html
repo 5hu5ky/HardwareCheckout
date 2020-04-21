@@ -8,7 +8,7 @@
             <div class="notification is-danger">
                 {{ messages }}. Go to <a href="{{ reverse_url('login') }}">Login Page</a>
             </div>
-            {% endif %}
+            {% end %}
 
             <form method="POST" action="/signup">
 
@@ -28,4 +28,4 @@
             </form>
         </div>
     </div>
-{% endblock %}
+{% end %}
