@@ -21,8 +21,8 @@ class User(db.Model):
     userQueueEntry = relationship("UserQueue")
     deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
 
-    def get_owned_devices(self):
-        return db.session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == self.id)
+    def get_owned_devices(self, session):
+        return session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == self.id)
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -41,8 +41,8 @@ class DeviceType(db.Model):
     name = Column(String(250), unique=True)
 
     @staticmethod
-    def get_queues():
-        return db.session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name)
+    def get_queues(session):
+        return session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name)
 
 class UserQueue(db.Model):
     __tablename__ = "userqueue"
@@ -64,9 +64,9 @@ class DeviceQueue(db.Model):
     type = Column(Integer, ForeignKey("devicetype.id"))
 
     @staticmethod
-    def get_all_web_urls():
-        return db.session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use')
+    def get_all_web_urls(session):
+        return session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use')
 
     @staticmethod
-    def get_all_ro_urls():
-        return db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all()
+    def get_all_ro_urls(session):
+        return session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use')
