@@ -24,6 +24,9 @@ def create_app():
         # xsrf_cookies=True,  #TODO
     )
 
+    if True:
+        return app # skip all below for testing without removing it
+
     global socketio
     socketio = SocketIO(app)
 
@@ -43,8 +46,6 @@ def create_app():
     app.register_blueprint(auth_blueprint)
 
     # blueprint for non-auth parts of app
-    from .main import main as main_blueprint
-    app.register_blueprint(main_blueprint)
     from .checkin import checkin as checkin_blueprint
     app.register_blueprint(checkin_blueprint)
     from .device import device as device_blueprint, restart_all_timers, DeviceNamespace
