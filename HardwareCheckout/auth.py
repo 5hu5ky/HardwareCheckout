@@ -3,18 +3,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from tornado_sqlalchemy import SessionMixin
 
 from .models import User, Role, db
-from .blueprint import Blueprint
+from .webutil import Blueprint, UserBaseHandler
 
 auth = Blueprint()
 
 
-class Handler(SessionMixin, RequestHandler):
-    def get_current_user(self):
-        return self.get_secure_cookie("user")
-
-
 @auth.route("/login", name="login")
-class LoginHandler(Handler):
+class LoginHandler(UserBaseHandler):
     def post(self):
         """
         Path that handles the actual logging in of users. All super basic at this point.
@@ -51,7 +46,7 @@ class LoginHandler(Handler):
 
 
 @auth.route("/signup")
-class SignUpHandler(Handler):
+class SignUpHandler(UserBaseHandler):
     def get(self):
         """
         Serves the html for the signup page
@@ -90,7 +85,7 @@ class SignUpHandler(Handler):
 
 
 @auth.route("/logout", name="logout")
-class LogoutHandler(Handler):
+class LogoutHandler(UserBaseHandler):
     @authenticated
     def get(self):
         """
