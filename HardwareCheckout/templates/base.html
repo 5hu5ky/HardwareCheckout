@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Car Hacking Village</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css"/>
-    {% block head %}{% endblock %}
+    {% block head %}{% end %}
 </head>
 
 <body>
@@ -36,13 +36,13 @@
                             <a href="{{ url_for('auth.signup') }}" class="navbar-item">
                                 Sign Up
                             </a>
-                        {% endif %}
+                        {% end %}
 
                         {% if current_user.is_authenticated %}
                             <a href="{{ url_for('auth.logout') }}" class="navbar-item">
                                 Logout
                             </a>
-                        {% endif %}
+                        {% end %}
                     </div>
                 </div>
             </div>
@@ -55,10 +55,10 @@
     </div>
 
     <div class="hero-body">
-        {% block content %}{% endblock %}
+        {% block content %}{% end %}
     </div>
 </section>
 
-{% block scripts %}{% endblock %}
+{% block scripts %}{% end %}
 </body>
 </html>

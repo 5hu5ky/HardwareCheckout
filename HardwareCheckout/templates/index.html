@@ -5,7 +5,7 @@
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="{{ url_for('static',filename='js/term.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
-{% endblock %}
+{% end %}
 
 {% block content %}
     <div class="container">
@@ -20,7 +20,7 @@
                         <li>Web: <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></li>
                     </ul>
                 </li>
-                {% endfor %}
+                {% end %}
             </ul>
         </div>
 
@@ -36,7 +36,7 @@
                     <input type="submit" value="Join Queue">
                     </form>
                 </div>
-                {% endfor %}
+                {% end %}
             </div>
         </div>
 
@@ -46,21 +46,21 @@
             <div id="stream-2" class="column"></div>
             <div id="stream-3" class="column"></div>
         </div>
-        {% endif %}
+        {% end %}
 
         <div class="tab">
             {% for term in terminals %}
             <button class="tablinks" onclick="openTab(event, '{{term[0]}}')">{{term[0]}}</button>
-            {% endfor %}
+            {% end %}
         </div>
 
         {% for term in terminals %}
         <div id="{{term[0]}}" class="tabcontent">
             <iframe  id="{{ term[0] }}-frame" src="{{term[1]}}" style="height:100%;width:100%;"></iframe>
         </div>
-        {% endfor %}
+        {% end %}
     </div>
-{% endblock %}
+{% end %}
 
 {% block scripts %}
 <script type="text/javascript">
@@ -127,4 +127,4 @@
     }
 
 </script>
-{% endblock %}
+{% end %}
