@@ -1,6 +1,8 @@
 from tornado.web import RequestHandler, MissingArgumentError, authenticated
 from werkzeug.security import generate_password_hash, check_password_hash
-from tornado_sqlalchemy import SessionMixin
+from tornado_sqlalchemy import SessionMixin, as_future
+from functools import partial
+
 
 from .models import User, Role, db
 from .webutil import Blueprint, UserBaseHandler

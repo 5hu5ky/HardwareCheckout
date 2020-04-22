@@ -1,7 +1,7 @@
 from base64 import b64decode
 
 from sqlalchemy.orm.exc import NoResultFound
-from tornado.web import RequestHandler, URLSpec
+from tornado.web import RequestHandler, URLSpec, WebSocketHandler
 from tornado_sqlalchemy import SessionMixin
 from werkzeug.security import check_password_hash
 
@@ -38,6 +38,14 @@ class DeviceBaseHandler(SessionMixin, RequestHandler):
         self.set_status(401)
         return False
 
+class UserWSHandler(SessionMixin, WebSocketHandler):
+    def get_current_user(self):
+        try:
+            user_id = self.get_secure_cookie('user')
+            with self.make_session() as session:
+                return session.query(User).filter_by(id=user_id).one()
+        except NoResultFound:
+            return False
 
 class Blueprint:
     def __init__(self):
