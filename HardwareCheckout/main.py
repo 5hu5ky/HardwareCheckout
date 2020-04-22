@@ -1,5 +1,6 @@
 from .models import DeviceQueue, DeviceType
-from .webutil import Blueprint, noself, UserBaseHandler, as_future
+from .webutil import Blueprint, noself, UserBaseHandler
+from tornado_sqlalchemy import as_future
 
 main = Blueprint()
 
@@ -14,7 +15,7 @@ class MainHandler(UserBaseHandler):
         """
         with self.make_session() as session:
             if self.current_user and self.current_user.has_roles('Admin'):
-                terminals_future = DeviceQueue.get_all_web_urls_async(session)
+                terminals_future = as_future(DeviceQueue.get_all_web_urls_async(session))
                 show_streams = False
             else:
                 terminals_future = DeviceQueue.get_all_ro_urls_async(session)
@@ -22,8 +23,21 @@ class MainHandler(UserBaseHandler):
             if self.current_user:
                 devices_future = self.current_user.get_owned_devices(session)
             else:
-                devices_future = as_future([])
-            queues = [{'id': id, 'name': name, 'size': count} for id, name, count in await DeviceType.get_queues_async(session)]
+                devices_future = as_future(list) #this isn't the best...
+
+            # TODO figure out why this one refuses to async
+            tqueues = DeviceType.get_queues(session)
+            queues = []
+            for i in tqueues:
+                queues.append({
+                    "id": i[0],
+                    "name": i[1],
+                    "size": i[2],
+                })
+
             terminals = await terminals_future
             devices = await devices_future
+            # session.flush()
+            
+        # TODO: limit the number of vars passed to the template
         self.render('index.html', **noself(locals()))

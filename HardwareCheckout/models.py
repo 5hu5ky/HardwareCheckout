@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 # from . import db
 from .config import db_path
 from tornado_sqlalchemy import SQLAlchemy, as_future
+from functools import partial
 
 db = SQLAlchemy(url=db_path)
 
@@ -25,7 +26,18 @@ class User(db.Model):
         return session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == self.id)
 
     def get_owned_devices_async(self, session):
-        return as_future(session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == self.id).all)
+        return as_future(
+            session.query(
+                DeviceType.name, 
+                DeviceQueue.sshAddr, 
+                DeviceQueue.webUrl
+            ).filter(
+                or_(
+                    DeviceQueue.state == 'in-queue', 
+                    DeviceQueue.state == 'in-use'
+                ), 
+                DeviceQueue.owner == self.id
+            ).all)
 
 
 class Role(db.Model):
@@ -46,11 +58,26 @@ class DeviceType(db.Model):
 
     @staticmethod
     def get_queues(session):
-        return session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name)
+        return session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name).all()
 
-    @staticmethod
-    def get_queues_async(session):
-        return as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name).all)
+    # TODO - honestly I don't know why this refuses to async
+    # @staticmethod
+    # async def get_queues_async(session):
+    #     return await as_future(session.query(
+    #             DeviceType.id, 
+    #             DeviceType.name, 
+    #             func.count(
+    #                 UserQueue.userId
+    #             )
+    #         ).select_from(
+    #             DeviceType
+    #         ).join(
+    #             UserQueue, 
+    #             isouter=True
+    #         ).group_by(
+    #             DeviceType.name
+    #         ).all)
+        
 
 
 class UserQueue(db.Model):
@@ -82,8 +109,8 @@ class DeviceQueue(db.Model):
 
     @staticmethod
     def get_all_web_urls_async(session):
-        return as_future(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all)
+        return as_future(partial(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by, state='in-use'))
 
     @staticmethod
     def get_all_ro_urls_async(session):
-        return as_future(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use').all)
+        return as_future(partial(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by, state='in-use'))

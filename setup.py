@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from HardwareCheckout import db, create_app
-from HardwareCheckout.models import Role
+from HardwareCheckout import create_app
+from HardwareCheckout.models import Role, db
 from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -14,7 +14,7 @@ args = parser.parse_args()
 if os.path.isfile(db_path[9:]):
     os.unlink(db_path[9:])
 
-db.create_all(app=create_app())
+db.create_all()
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
