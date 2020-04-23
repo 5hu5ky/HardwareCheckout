@@ -1,17 +1,3 @@
-from base64 import b64decode
-from datetime import datetime, timedelta
-from functools import wraps
-
-from flask import abort, Blueprint, request, Response, session
-from flask_socketio import disconnect, join_room, Namespace, send
-from sqlalchemy.orm.exc import NoResultFound
-from werkzeug.security import check_password_hash
-
-from . import db, socketio, timer
-from .models import DeviceQueue, DeviceType, UserQueue
-
-device = Blueprint('device', __name__)
-
 """
 A brief guide to all the device states:
   * ready  - device is ready to be used but not in queue
@@ -34,183 +20,234 @@ Other states
   * disabled - device disabled by admin
 """
 
+from base64 import b64decode
+from datetime import datetime, timedelta
+from functools import wraps, partial
+from contextlib import contextmanager
 
-def auth_device():
-    if 'Authorization' not in request.headers or not request.headers['Authorization'].startswith('Basic '):
-        return None
-    name, password = b64decode(request.headers['Authorization'][6:]).decode('latin1').split(':', 1)
+from tornado.web import authenticated
+from tornado.escape import json_decode
+from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.security import check_password_hash
+
+from . import timer
+from .models import DeviceQueue, DeviceType, UserQueue, db
+from .webutil import Blueprint, DeviceWSHandler, Timer
+
+device = Blueprint()
+
+@contextmanager
+def make_session():
+    session = None
     try:
-        device = DeviceQueue.query.filter_by(name=name).one()
-        if not check_password_hash(device.password, password):
-            return None
-        return device
-    except NoResultFound:
-        return None
+        session = db.sessionmaker()
+        yield session
+    except Exception:
+        if session:
+            session.rollback()
+        raise
+    else:
+        session.commit()
+    finally:
+        if session:
+            session.close()
 
 
-def device_login_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        device = auth_device()
-        if not device:
-            abort(Response(status=401, headers={'WWW-Authenticate': 'Basic realm="CarHackingVillage"'}))
-        return func(*args, **kwargs, device=device)
-    return wrapper
+@device.route('/state')
+class DeviceStateHandler(DeviceWSHandler):
+    __timer = None
+    __timer_dict = dict()
 
+    @authenticated
+    def open(self):
+        if self.__class__.__timer is None:
+            self.__class__.__timer = Timer(self.__class__.__callback, True)
+            self.__class__.__timer.start()
+        self.device = self.current_user
 
-class DeviceNamespace(Namespace):
-    def on_connect(self):
-        device = auth_device()
-        if not device:
-            disconnect()
-            return False
-        session['device_id'] = device.id
-        join_room('device:%i' % device.id)
-        if device.state in ('ready', 'in-queue', 'in-use', 'want-provision'):
-            send_device_state(device, 'want-provision')
-        elif device.state in ('disabled', 'want-deprovision'):
-            send_device_state(device, 'want-deprovision')
-        else:
-            send_device_state(device, 'error')
+    def on_message(self, message):
+        parsed = json_decode(message)
 
-    def on_message(self, json):
-        device_id = session['device_id']
         try:
-            device = DeviceQueue.query.filter_by(id=device_id).one()
-        except NoResultFound:
-            disconnect()
-            return False
-        device_put.__wrapped__.__wrapped__(**json, device=device)
+            msgType = parsed["type"]
+        except (AttributeError, KeyError):
+            # try:
+            #     self.write_message({"error":"invalid message"})
+            # except Exception:
+            #     pass
+            return
+        
+        if msgType == "put":
+            try:
+                state    = parsed["state"]
+                ssh_addr = parsed.get("ssh", None)
+                web_addr = parsed.get("web", None)
+                webro_addr=parsed.get("webro", None)
+            except KeyError:
+                return
+            self.device_put(state, ssh=ssh_addr, web=web_addr, web_ro=webro_addr)
 
+    def device_put(self, state, ssh=None, web=None, web_ro=None):
+        self.device.sshAddr = ssh
+        self.device.webUrl = web
+        self.device.roUrl = web_ro
+        with self.make_session() as session:
+            session.add(device)
+            session.commit()
+        
+        # if we are transitioning to a failure state
+        if state in ('provision-failed', 'deprovision-failed'):
+            device.state = state
+            db.session.add(device)
+            db.session.commit()
+            return {'result', 'success'}
 
-def json_api(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        json = request.get_json()
-        if not json:
-            abort(415)
-        json.update(kwargs)
-        return func(*args, **json)
-    return wrapper
+        # if we are already in a failure state
+        if device.state in ('provision-failed', 'deprovision-failed'):
+            return {'result': 'error', 'error': 'device disabled'}
 
+        # if the new status is invalid
+        if state not in ('is-provisioned', 'is-deprovisioned', 'client-connected'):
+            return {'result': 'error', 'error': 'invalid state'}, 400
+        
+        # if the new status is provisioned and we are correctly in want provision
+        if state == 'is-provisioned' and device.state == 'want-provision':
+            with self.make_session() as session:
+                self.device_ready(device, session)
+        # if new status is deprovisioned and previous state is want deprovision
+        elif state == 'is-deprovisioned' and device.state == 'want-deprovision':
+            with self.make_session() as session:
+                self.provision_device(device, session)
+            self.send_device_state('want-provision')
+        # if new status is client connected and we were in queue
+        elif state == 'client-connected' and device.state == 'in-queue':
+            with self.make_session() as session:
+                self.device_in_use(device, session, True)
+        elif device.state in ('disabled', 'want-deprovision'):
+            if state != 'is-deprovisioned':
+                send_device_state(device, 'want-deprovision')
+            else:
+                return {'result': 'success'}
+        elif state not in ('is-provisioned', 'client-connected'):
+            send_device_state(device, 'want-provision')
+        return {'result': 'success'}
 
-@device.route('/state', methods=['PUT'])
-@device_login_required
-@json_api
-def device_put(device, state, ssh=None, web=None, web_ro=None):
-    device.sshAddr = ssh
-    device.webUrl = web
-    device.roUrl = web_ro
-    db.session.add(device)
-    db.session.commit()
-    if state in ('provision-failed', 'deprovision-failed'):
-        device.state = state
-        db.session.add(device)
-        db.session.commit()
-        return {'result', 'success'}
-    if device.state in ('provision-failed', 'deprovision-failed'):
-        return {'result': 'error', 'error': 'device disabled'}
-    if state not in ('is-provisioned', 'is-deprovisioned', 'client-connected'):
-        return {'result': 'error', 'error': 'invalid state'}, 400
-    if state == 'is-provisioned' and device.state == 'want-provision':
-        device_ready(device)
-    elif state == 'is-deprovisioned' and device.state == 'want-deprovision':
-        provision_device(device)
-    elif state == 'client-connected' and device.state == 'in-queue':
-        device_in_use(device, True)
-    elif device.state in ('disabled', 'want-deprovision'):
-        if state != 'is-deprovisioned':
-            send_device_state(device, 'want-deprovision')
-        else:
-            return {'result': 'success'}
-    elif state not in ('is-provisioned', 'client-connected'):
-        send_device_state(device, 'want-provision')
-    return {'result': 'success'}
+    @staticmethod
+    def deprovision_device(device):
+        with make_session() as session:
+            device.state = 'want-deprovision'
+            device.expiration = None
+            session.add(device)
 
+    @staticmethod
+    def provision_device(device):
+        with make_session() as session:
+            device.state = 'want-provision'
+            device.expiration = None
+            session.add(device)
 
-@device.route('/timer/<device_id>', methods=['POST'])
-def state_callback(device_id):
-    device = DeviceQueue.query.filter_by(id=device_id).one()
-    {
-        'ready': device_ready,
-        'in-queue': device_in_queue,
-        'in-use': device_in_use
-    }[device.state](device)
-    return '', 204
+    @staticmethod
+    def device_ready(device):
+        with make_session() as session:
+            device.state = 'ready'
+            device.expiration = None
+            device.owner = None
+            session.add(device)
+        DeviceStateHandler.check_for_new_user()
 
+    @staticmethod
+    def check_for_new_owner(device):
+        with make_session() as session:
+            next_user = session.query(UserQueue).filter_by(type=device.type).order_by(UserQueue.id).first()
+            if next_user:
+                session.delete(next_user)
+                return DeviceStateHandler.device_in_queue(device, next_user)
 
-def device_ready(device):
-    device.state = 'ready'
-    device.expiration = None
-    device.owner = None
-    db.session.add(device)
-    db.session.commit()
-    next_user = UserQueue.query.filter_by(type=device.type).order_by(UserQueue.id).first()
-    if next_user:
-        db.session.delete(next_user)
-        return device_in_queue(device, next_user)
+    @staticmethod
+    def device_in_queue(device, next_user):
+        with make_session() as session:
+            device.state = 'in-queue'
+            device.owner = next_user.id
+            session.add(device)
 
-
-def device_in_queue(device, next_user=None):
-    device.state = 'in-queue'
-    if next_user is not None:
-        device.owner = next_user.id
-        device.expiration = datetime.now() + timedelta(minutes=5)
-        timer.add_timer('/device/timer/{:d}'.format(device.id), device.expiration)
+        timer = Timer(DeviceStateHandler.return_device, repeat=False, timeout=1800, args=[device.id])
+        timer.start()
+        try:
+            DeviceStateHandler.push_timer(device.id, timer)
+        except KeyError:
+            old_timer = DeviceStateHandler.pop_timer(device.id)
+            old_timer.stop()
+            del old_timer
+            DeviceStateHandler.push_timer(device.id, timer)
         send_message_to_owner(device, 'device_available')
-    db.session.add(device)
-    db.session.commit()
-    if datetime.now() >= device.expiration:
+            
+
+    @staticmethod
+    def return_device(deviceID):
+        with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).one()
+            DeviceStateHandler.deprovision_device(device)
         send_message_to_owner(device, 'device_lost')
-        return deprovision_device(device)
 
+    @staticmethod
+    def device_in_use(device, reset_timer=False):
+        device.state = 'in-use'
+        with make_session() as session:
+            session.add(device)
+            session.commit()
+        
+        timer = Timer(DeviceStateHandler.reclaim_device, repeat=False, timeout=1800, args=[device.id])
+        timer.start()
+        try:
+            DeviceStateHandler.push_timer(device.id, timer)
+        except KeyError:
+            old_timer = DeviceStateHandler.pop_timer(device.id)
+            old_timer.stop()
+            del old_timer
+            DeviceStateHandler.push_timer(device.id, timer)
+            
 
-def device_in_use(device, reset_timer=False):
-    device.state = 'in-use'
-    if reset_timer:
-        device.expiration = datetime.now() + timedelta(minutes=30)
-        timer.add_timer('/device/timer/{:d}'.format(device.id), device.expiration)
-        send_device_state(device, 'update-expiration', expiration=device.expiration.timestamp())
-    db.session.add(device)
-    db.session.commit()
-    if datetime.now() >= device.expiration:
+    @staticmethod
+    def reclaim_device(deviceID):
+        with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).one()
+            DeviceStateHandler.deprovision_device(device)
         send_message_to_owner(device, 'device_reclaimed')
-        return deprovision_device(device)
 
+    def send_device_state(self, state, **kwargs):
+        kwargs['state'] = state
+        return self.write_message(kwargs)
 
-def deprovision_device(device):
-    device.state = 'want-deprovision'
-    device.expiration = None
-    db.session.add(device)
-    db.session.commit()
-    send_device_state(device, 'want-deprovision')
+    def send_message_to_owner(self, device, message):
+        name = DeviceType.query.filter_by(id=device.type).one().name
+        return socketio.send({'message': message, 'device': name}, json=True, namespace='/queue', room='user:%i' % device.owner)
 
+    @classmethod
+    def push_timer(cls, deviceID, timer):
+        if cls.__timer_dict.get(deviceID, False):
+            raise KeyError("device timer already registered")
+        cls.__timer_dict[deviceID] = timer
 
-def provision_device(device):
-    device.state = 'want-provision'
-    device.expiration = None
-    db.session.add(device)
-    db.session.commit()
-    send_device_state(device, 'want-provision')
+    @classmethod
+    def pop_timer(cls, deviceID):
+        return cls.__timer_dict.pop(deviceID)
 
-
-def send_device_state(device, state, **kwargs):
-    kwargs['state'] = state
-    return socketio.send(kwargs, json=True, namespace='/device', room='device:%i' % device.id)
-
-
-def send_message_to_owner(device, message):
-    name = DeviceType.query.filter_by(id=device.type).one().name
-    return socketio.send({'message': message, 'device': name}, json=True, namespace='/queue', room='user:%i' % device.owner)
-
-
-@device.route('/timer', methods=['POST'])
-def restart_all_timers():
-    for device in DeviceQueue.query:
-        if device.state in ('ready', 'in-queue', 'in-use'):
-            {
-                'ready': device_ready,
-                'in-queue': device_in_queue,
-                'in-use': device_in_use
-            }[device.state](device)
-    return '', 204
+    @staticmethod
+    def __callback():
+        try:
+            session = db.sessionmaker()
+            for device in session.query(DeviceQueue).all():
+                if device.state == 'ready':
+                    DeviceStateHandler.check_for_new_owner(device, session)
+                # elif device.state == "in-queue":
+                #     DeviceStateHandler.device_in_queue(device, session)
+                # elif device.state == "in-use":
+                #     DeviceStateHandler.device_in_use(device)
+        except Exception:
+            if session:
+                session.rollback()
+            raise
+        else:
+            session.commit()
+        finally:
+            session.close()

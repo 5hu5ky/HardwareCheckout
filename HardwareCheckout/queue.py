@@ -9,6 +9,7 @@ from .webutil import Blueprint, UserWSHandler
 
 queue = Blueprint()
 
+@queue.route("/")
 class ChatSocketHandler(UserWSHandler):
     waiters = set()
     cache = []
@@ -47,7 +48,7 @@ class ChatSocketHandler(UserWSHandler):
         try:
             msgType = parsed["type"]
             uid = parsed.get("id", None)
-        except AttributeError:
+        except (AttributeError, KeyError):
             try:
                 self.write_message({"error":"invalid message"})
             except Exception:
@@ -80,7 +81,6 @@ class ChatSocketHandler(UserWSHandler):
             return
             
         # ChatSocketHandler.update_cache(msg)
-        ChatSocketHandler.send_updates(msg)
         self.write_message(msg)
         return
 
@@ -114,5 +114,8 @@ class ChatSocketHandler(UserWSHandler):
 
     def check_queue(self, id):
         # TODO make async
-        for device in DeviceQueue.query.filter_by(type=id, state='ready'):
-            device_ready(device)
+        with self.make_session() as session:
+            deviceList = session.query(DeviceQueue).filter_by(type=id, state='ready')
+            for device in deviceList :
+                device_ready(session, device)
+                ChatSocketHandler.send_updates(msg)

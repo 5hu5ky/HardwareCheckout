@@ -8,6 +8,7 @@ from .config import db_path
 from .main import main as main_blueprint
 from .auth import auth as auth_blueprint
 from .terminals import terms as terminal_blueprint
+from .queue import queue as queue_blueprint
 
 # init SQLAlchemy so we can use it later in our models
 
@@ -21,6 +22,7 @@ def create_app():
             *(main_blueprint.publish('/')),
             *(auth_blueprint.publish('/')),
             *(terminal_blueprint.publish('/')),
+            *(queue_blueprint.publish('/queue'))
         ],
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
         template_path="HardwareCheckout/templates/",
@@ -29,8 +31,7 @@ def create_app():
         # xsrf_cookies=True,  #TODO
     )
 
-    if True:
-        return app # skip all below for testing without removing it
+    return app # skip all below for testing without removing it
 
     # global socketio
     # socketio = SocketIO(app)

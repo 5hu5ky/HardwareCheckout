@@ -82,13 +82,7 @@
 
     let socket = io("/queue");
     socket.on("json", function(msg) {
-        if (msg.message == "device_available") {
-            notify("Your device " + msg.device + " is ready. You have five minutes to log in before the device becomes available to the next person in the queue.");
-        } else if (msg.message == "device_lost") {
-            notify("Your login time for device " + msg.device + " has expired. You may re-enter the queue to try again.");
-        } else if (msg.message == "device_reclaimed") {
-            notify("Thank you for participating in the virtual CHV CTF. If you would like more time, you may enter the queue again.");
-        }
+        
         get_devices().catch(e => location.reload());
     });
 
