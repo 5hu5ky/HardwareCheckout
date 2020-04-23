@@ -1,5 +1,6 @@
 from base64 import b64decode
 from functools import partial
+from contextlib import contextmanager
 
 from tornado.web import RequestHandler, URLSpec, WebSocketHandler
 from tornado.ioloop import IOLoop
@@ -7,7 +8,7 @@ from tornado_sqlalchemy import SessionMixin
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
-from .models import DeviceQueue, User
+from .models import DeviceQueue, User, db
 
 
 class UserBaseHandler(SessionMixin, RequestHandler):
@@ -148,3 +149,19 @@ class Timer():
             pass
         if self.__repeat:
             self.__start()
+
+@contextmanager
+def make_session():
+    session = None
+    try:
+        session = db.sessionmaker()
+        yield session
+    except Exception:
+        if session:
+            session.rollback()
+        raise
+    else:
+        session.commit()
+    finally:
+        if session:
+            session.close()

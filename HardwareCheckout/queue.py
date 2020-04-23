@@ -3,17 +3,14 @@ from tornado.escape import json_decode
 from tornado.web import authenticated
 import tornado.websocket
 
-from .device import device_ready
 from .models import DeviceQueue, DeviceType, User, UserQueue, db
-from .webutil import Blueprint, UserWSHandler
+from .webutil import Blueprint, UserWSHandler, make_session
 
 queue = Blueprint()
 
 @queue.route("/")
-class ChatSocketHandler(UserWSHandler):
-    waiters = set()
-    cache = []
-    cache_size = 200
+class QueueWSHandler(UserWSHandler):
+    waiters = dict()
 
     def get_compression_options(self):
         # Non-None enables compression with default options.
@@ -21,25 +18,29 @@ class ChatSocketHandler(UserWSHandler):
 
     @authenticated
     def open(self):
-        ChatSocketHandler.waiters.add(self)
+        if self.__class__.waiters.get(self.current_user.id, False):
+            self.__class__.waiters[self.current_user.id] = [self]
+        else:
+            self.__class__.waiters[self.current_user.id].append(self)
+        self.check_queue()
 
     def on_close(self):
-        ChatSocketHandler.waiters.remove(self)
+        self.__class__.waiters[self.current_user.id].remove(self)
 
-    # @classmethod
-    # def update_cache(cls, chat):
-    #     cls.cache.append(chat)
-    #     if len(cls.cache) > cls.cache_size:
-    #         cls.cache = cls.cache[-cls.cache_size :]
+    @classmethod
+    def notify_user(cls, userId, message):
+        user = cls.waiters.get(userId, None)
+        if user is None:
+            raise KeyError("User not found")
+        for tabs in user:
+            tabs.write_message(message)
 
     @classmethod
     def send_updates(cls, chat):
-        # logging.info("sending message to %d waiters", len(cls.waiters))
-        for waiter in cls.waiters:
+        for waiter in cls.waiters.values():
             try:
                 waiter.write_message(chat)
             except Exception:
-                # logging.error("Error sending message", exc_info=True)
                 pass
 
     async def on_message(self, message):
@@ -80,7 +81,6 @@ class ChatSocketHandler(UserWSHandler):
                 pass
             return
             
-        # ChatSocketHandler.update_cache(msg)
         self.write_message(msg)
         return
 
@@ -100,7 +100,6 @@ class ChatSocketHandler(UserWSHandler):
             session.add(entry)
             session.commit()
             
-        self.check_queue(id)
         return {'result': 'success'}
 
     def handle_delete(self, id):
@@ -109,13 +108,27 @@ class ChatSocketHandler(UserWSHandler):
             entry = session.query(UserQueue).filter_by(userId=self.current_user.id, type=id).first()
             if entry:
                 session.delete(entry)
-                session.commit() # TODO: remove?
         return {'result': 'success'}
 
-    def check_queue(self, id):
+    def check_queue(self):
         # TODO make async
         with self.make_session() as session:
-            deviceList = session.query(DeviceQueue).filter_by(type=id, state='ready')
-            for device in deviceList :
-                device_ready(session, device)
-                ChatSocketHandler.send_updates(msg)
+            deviceList = session.query(DeviceQueue.id).filter_by(owner=self.current_user.id).all()
+        for device in deviceList:
+            self.send_device_info_to_user(self.current_user.id, device)
+
+    @classmethod
+    def send_device_info_to_user(cls, userId, deviceId):
+        # TODO make async
+        with make_session() as session:
+            deviceInfo = session.query(DeviceQueue.sshAddr, DeviceQueue.webUrl, DeviceQueue.name).filter_by(userId=userId).all()
+        for devices in deviceInfo:
+            cls.notify_user(userId, {"status":"device_available", "ssh":devices[0], "web":devices[1], "device":devices[2]})
+
+    # @classmethod
+    # def send_device_info_to_user(cls, userId, deviceId):
+    #     # TODO make async
+    #     with make_session() as session:
+    #         deviceInfo = session.query(DeviceQueue.sshAddr, DeviceQueue.webUrl).filter_by(userId=userId).all()
+    #     for devices in deviceInfo:
+    #         cls.notify_user(userId, {"status":"device_lost"})

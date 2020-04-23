@@ -23,7 +23,6 @@ Other states
 from base64 import b64decode
 from datetime import datetime, timedelta
 from functools import wraps, partial
-from contextlib import contextmanager
 
 from tornado.web import authenticated
 from tornado.escape import json_decode
@@ -31,26 +30,13 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
 from . import timer
-from .models import DeviceQueue, DeviceType, UserQueue, db
-from .webutil import Blueprint, DeviceWSHandler, Timer
+from .models import DeviceQueue, DeviceType, UserQueue
+from .webutil import Blueprint, DeviceWSHandler, Timer, make_session
+from .queue import QueueWSHandler
 
 device = Blueprint()
 
-@contextmanager
-def make_session():
-    session = None
-    try:
-        session = db.sessionmaker()
-        yield session
-    except Exception:
-        if session:
-            session.rollback()
-        raise
-    else:
-        session.commit()
-    finally:
-        if session:
-            session.close()
+
 
 
 @device.route('/state')
@@ -88,18 +74,24 @@ class DeviceStateHandler(DeviceWSHandler):
             self.device_put(state, ssh=ssh_addr, web=web_addr, web_ro=webro_addr)
 
     def device_put(self, state, ssh=None, web=None, web_ro=None):
-        self.device.sshAddr = ssh
-        self.device.webUrl = web
-        self.device.roUrl = web_ro
-        with self.make_session() as session:
-            session.add(device)
-            session.commit()
-        
+        # always update the urls if available
+        if ssh:
+            self.device.sshAddr = ssh
+        if web:
+            self.device.webUrl = web
+        if web_ro:
+            self.device.roUrl = web_ro
+
         # if we are transitioning to a failure state
         if state in ('provision-failed', 'deprovision-failed'):
             device.state = state
-            db.session.add(device)
-            db.session.commit()
+
+        # write to the db
+        with self.make_session() as session:
+            session.add(device)
+        
+        # return if going into fail state
+        if state in ('provision-failed', 'deprovision-failed'):
             return {'result', 'success'}
 
         # if we are already in a failure state
@@ -112,24 +104,21 @@ class DeviceStateHandler(DeviceWSHandler):
         
         # if the new status is provisioned and we are correctly in want provision
         if state == 'is-provisioned' and device.state == 'want-provision':
-            with self.make_session() as session:
-                self.device_ready(device, session)
+            self.device_ready(device)
         # if new status is deprovisioned and previous state is want deprovision
         elif state == 'is-deprovisioned' and device.state == 'want-deprovision':
-            with self.make_session() as session:
-                self.provision_device(device, session)
+            self.provision_device(device)
             self.send_device_state('want-provision')
         # if new status is client connected and we were in queue
         elif state == 'client-connected' and device.state == 'in-queue':
-            with self.make_session() as session:
-                self.device_in_use(device, session, True)
+            self.device_in_use(device)
         elif device.state in ('disabled', 'want-deprovision'):
             if state != 'is-deprovisioned':
-                send_device_state(device, 'want-deprovision')
+                self.send_device_state('want-deprovision')
             else:
                 return {'result': 'success'}
         elif state not in ('is-provisioned', 'client-connected'):
-            send_device_state(device, 'want-provision')
+            self.send_device_state('want-provision')
         return {'result': 'success'}
 
     @staticmethod
@@ -179,7 +168,7 @@ class DeviceStateHandler(DeviceWSHandler):
             old_timer.stop()
             del old_timer
             DeviceStateHandler.push_timer(device.id, timer)
-        send_message_to_owner(device, 'device_available')
+        QueueWSHandler.send_device_info_to_user(next_user.id, device.id)
             
 
     @staticmethod
@@ -187,10 +176,10 @@ class DeviceStateHandler(DeviceWSHandler):
         with make_session() as session:
             device = session.query(DeviceQueue).filter_by(id=deviceID).one()
             DeviceStateHandler.deprovision_device(device)
-        send_message_to_owner(device, 'device_lost')
+        DeviceStateHandler.send_message_to_owner(device, 'device_lost')
 
     @staticmethod
-    def device_in_use(device, reset_timer=False):
+    def device_in_use(device):
         device.state = 'in-use'
         with make_session() as session:
             session.add(device)
@@ -211,16 +200,18 @@ class DeviceStateHandler(DeviceWSHandler):
     def reclaim_device(deviceID):
         with make_session() as session:
             device = session.query(DeviceQueue).filter_by(id=deviceID).one()
+            DeviceStateHandler.send_message_to_owner(device, 'device_reclaimed')
             DeviceStateHandler.deprovision_device(device)
-        send_message_to_owner(device, 'device_reclaimed')
 
     def send_device_state(self, state, **kwargs):
         kwargs['state'] = state
         return self.write_message(kwargs)
 
-    def send_message_to_owner(self, device, message):
-        name = DeviceType.query.filter_by(id=device.type).one().name
-        return socketio.send({'message': message, 'device': name}, json=True, namespace='/queue', room='user:%i' % device.owner)
+    @staticmethod
+    def send_message_to_owner(device, message):
+        with make_session() as session:
+            name = session.query(DeviceType.name).filter_by(id=device.type).one()
+        QueueWSHandler.notify_user(device.owner,{'message': message, 'device': name})
 
     @classmethod
     def push_timer(cls, deviceID, timer):
@@ -234,20 +225,12 @@ class DeviceStateHandler(DeviceWSHandler):
 
     @staticmethod
     def __callback():
-        try:
-            session = db.sessionmaker()
+        with make_session() as session:
             for device in session.query(DeviceQueue).all():
                 if device.state == 'ready':
-                    DeviceStateHandler.check_for_new_owner(device, session)
+                    DeviceStateHandler.check_for_new_owner(device)
                 # elif device.state == "in-queue":
                 #     DeviceStateHandler.device_in_queue(device, session)
                 # elif device.state == "in-use":
                 #     DeviceStateHandler.device_in_use(device)
-        except Exception:
-            if session:
-                session.rollback()
-            raise
-        else:
-            session.commit()
-        finally:
-            session.close()
+        
