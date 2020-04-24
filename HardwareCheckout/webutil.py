@@ -2,10 +2,12 @@ from base64 import b64decode
 from functools import partial
 from contextlib import contextmanager
 
-from tornado.web import RequestHandler, URLSpec, WebSocketHandler
-from tornado.ioloop import IOLoop
-from tornado_sqlalchemy import SessionMixin
 from sqlalchemy.orm.exc import NoResultFound
+from tornado.ioloop import IOLoop
+from tornado.locks import Condition
+from tornado.web import RequestHandler, URLSpec
+from tornado.websocket import WebSocketHandler
+from tornado_sqlalchemy import SessionMixin
 from werkzeug.security import check_password_hash
 
 from .models import DeviceQueue, User, db
@@ -14,9 +16,8 @@ from .models import DeviceQueue, User, db
 class UserBaseHandler(SessionMixin, RequestHandler):
     def get_current_user(self):
         try:
-            user_id = self.get_secure_cookie('user')
-            with self.make_session() as session:
-                return session.query(User).filter_by(id=user_id).one()
+            user_id = int(self.get_secure_cookie('user'))
+            return self.session.query(User).filter_by(id=user_id).one()
         except NoResultFound:
             return False
 
@@ -41,14 +42,6 @@ class DeviceBaseHandler(SessionMixin, RequestHandler):
         self.set_status(401)
         return False
 
-class UserWSHandler(SessionMixin, WebSocketHandler):
-    def get_current_user(self):
-        try:
-            user_id = self.get_secure_cookie('user')
-            with self.make_session() as session:
-                return session.query(User).filter_by(id=user_id).one()
-        except NoResultFound:
-            return False
 
 class DeviceWSHandler(SessionMixin, WebSocketHandler):
     def get_current_user(self):
@@ -71,6 +64,7 @@ class DeviceWSHandler(SessionMixin, WebSocketHandler):
         self.set_header('WWW-Authenticate', 'Basic realm="CarHackingVillage"')
         self.set_status(401)
         return False
+
 
 class Blueprint:
     def __init__(self):
@@ -99,6 +93,20 @@ class Blueprint:
 
 def noself(dict):
     return {k: v for k, v in dict.items() if k != 'self'}
+
+
+class Messenger:
+    def __init__(self):
+        self.condition = Condition()
+
+    def send(self, message):
+        self.message = message
+        self.condition.notify_all()
+
+    async def receive(self):
+        await self.condition.wait()
+        return self.message
+
 
 class Timer():
     __instance = None
@@ -149,6 +157,7 @@ class Timer():
             pass
         if self.__repeat:
             self.__start()
+
 
 @contextmanager
 def make_session():

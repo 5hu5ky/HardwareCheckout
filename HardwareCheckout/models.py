@@ -45,6 +45,25 @@ class User(db.Model):
                 return True
         return False
 
+    def try_to_claim_device(self, session, device_type):
+        if type(device_type) is not int:
+            device_type = device_type.id
+        device = session.query(
+            DeviceQueue
+        ).filter_by(
+            type=device_type,
+            state='ready'
+        ).first()
+        if device:
+            for uq in session.query(UserQueue).filter_by(userId=self.id, type=device_type):
+                session.delete(uq)
+            device.state = 'in-queue'
+            session.commit()
+            self.assigned_device_callback(device)
+
+    def assigned_device_callback(self, device):
+        pass
+
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -57,7 +76,6 @@ class UserRoles(db.Model):
     id = Column(Integer(), primary_key=True)
     user_id = Column(Integer(), ForeignKey('user.id', ondelete='CASCADE'))
     role_id = Column(Integer(), ForeignKey('roles.id', ondelete='CASCADE'))
-
 
 class DeviceType(db.Model):
     __tablename__ = "devicetype"
@@ -102,6 +120,7 @@ class DeviceQueue(db.Model):
     expiration = Column(DateTime)
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
+    type_obj = relationship("DeviceType")
 
     @staticmethod
     def get_all_web_urls(session):
