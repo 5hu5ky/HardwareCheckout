@@ -24,6 +24,7 @@ def create_app():
             *(terminal_blueprint.publish('/')),
             *(queue_blueprint.publish('/queue'))
         ],
+        login_url="/login",
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
         template_path="HardwareCheckout/templates/",
         static_path="HardwareCheckout/static/",
