@@ -21,12 +21,12 @@ class MainHandler(UserBaseHandler):
                 terminals = await DeviceQueue.get_all_ro_urls_async(session)
                 show_streams = True
             if self.current_user:
-                devices = await self.current_user.get_owned_devices(session)
+                devices = await self.current_user.get_owned_devices_async(session)
             else:
                 devices = []
 
             # TODO figure out why this one refuses to async
-            tqueues = DeviceType.get_queues(session)
+            tqueues = await DeviceType.get_queues_async(session)
             queues = []
             for i in tqueues:
                 queues.append({
@@ -35,6 +35,6 @@ class MainHandler(UserBaseHandler):
                     "size": i[2],
                 })
             # session.flush()
-            
+
         # TODO: limit the number of vars passed to the template
         self.render('index.html', **noself(locals()))

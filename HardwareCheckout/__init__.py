@@ -29,6 +29,8 @@ def create_app():
         static_path="HardwareCheckout/static/",
         db=SQLAlchemy(url=db_path),
         # xsrf_cookies=True,  #TODO
+        websocket_ping_interval=10000,
+        websocket_ping_timeout=30000,
     )
 
     return app # skip all below for testing without removing it

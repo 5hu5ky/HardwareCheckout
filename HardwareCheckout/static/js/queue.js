@@ -1,7 +1,3 @@
-$(document).ready(function() {
-    updater.start();
-});
-
 // function newMessage(form) {
 //     var message = form.formToDict();
 //     updater.socket.send(JSON.stringify(message));
@@ -23,13 +19,24 @@ var updater = {
 
     start: function() {
         // TODO change to wss
-        var url = "ws://" + location.host + "/queue/";
+        var url = "ws://" + location.host + "/queue/event";
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
+            console.log(event);
             msg = JSON.parse(event.data);
+            if (msg.type == "new_device") {
+                updater.notify("Your device " + msg.device.name + " is ready. You have five minutes to log in before the device becomes available to the next person in the queue.");
+                updater.addConnectionInfo(msg.device); // TODO: create this method
+            }
+            if (msg.type == "all_devices") {
+                updater.removeAll();
+                for (let device of msg.devices) {
+                    updater.addConnectionInfo(device);
+                }
+            }
             if(msg.error && msg.error == "success" )
             {
-                if (msg.error == "device_available") {
+                if (msg.message == "device_available") {
                     updater.notify("Your device " + msg.device + " is ready. You have five minutes to log in before the device becomes available to the next person in the queue.");
                 } else if (msg.message == "device_lost") {
                     updater.notify("Your login time for device " + msg.device + " has expired. You may re-enter the queue to try again.");
@@ -99,3 +106,5 @@ var updater = {
         domList.appendChild(li);
     }
 };
+
+updater.start();

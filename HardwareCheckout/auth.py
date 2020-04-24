@@ -30,13 +30,12 @@ class LoginHandler(UserBaseHandler):
             # self.write_error(400)
             return self.render("login.html", messages="Invalid username or password")
 
-        with self.make_session() as session:
-            user = session.query(User).filter_by(name=name).first()
+        user = self.session.query(User).filter_by(name=name).first()
 
         if not user or not check_password_hash(user.password, password):
             return self.render("login.html", messages="Invalid username or password")
 
-        self.set_secure_cookie("user", name)
+        self.set_secure_cookie("user", str(user.id))
         return self.redirect(self.reverse_url("main"))
 
     def get(self):
@@ -44,7 +43,7 @@ class LoginHandler(UserBaseHandler):
         Serves the html for the login page.
         :return:
         """
-        return self.render("login.html")
+        return self.render("login.html", messages=None)
 
 
 @auth.route("/signup")
@@ -54,7 +53,7 @@ class SignUpHandler(UserBaseHandler):
         Serves the html for the signup page
         :return:
         """
-        return self.render("signup.html")
+        return self.render("signup.html", messages=None)
 
     def post(self):
         """
@@ -77,7 +76,7 @@ class SignUpHandler(UserBaseHandler):
             new_user = User(
                 name=name,
                 password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
-                roles=[Role.query.filter_by(name="Human").first()],
+                roles=[session.query(Role).filter_by(name="Human").first()],
             )
 
             session.add(new_user)

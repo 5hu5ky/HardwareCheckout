@@ -62,6 +62,7 @@
 {% end %}
 
 {% block scripts %}
+<script src="{{ static_url('js/queue.js') }}"></script>
 <script type="text/javascript">
     let player1 = new Twitch.Player("stream-1", {
         width: 400,

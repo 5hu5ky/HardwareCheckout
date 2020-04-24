@@ -8,6 +8,7 @@ from functools import partial
 
 db = SQLAlchemy(url=db_path)
 
+
 class User(db.Model):
     """
     Suuuuper basic User model, this will almost certainly need to be updated.
@@ -16,34 +17,59 @@ class User(db.Model):
     id = Column(Integer, primary_key=True)
     password = Column(String(93), unique=True)
     name = Column(String(1000))
-    
+
     #relationships
     roles = relationship('Role', secondary='user_roles')
     userQueueEntry = relationship("UserQueue")
     deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
 
     def get_owned_devices(self, session):
-        return session.query(DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl).filter(or_(DeviceQueue.state == 'in-queue', DeviceQueue.state == 'in-use'), DeviceQueue.owner == self.id)
+        return session.query(
+            DeviceType.name,
+            DeviceQueue.sshAddr,
+            DeviceQueue.webUrl
+        ).filter(
+            or_(
+                DeviceQueue.state == 'in-queue',
+                DeviceQueue.state == 'in-use'
+            ),
+            DeviceQueue.owner == self.id
+        )
 
     def get_owned_devices_async(self, session):
-        return as_future(
-            session.query(
-                DeviceType.name, 
-                DeviceQueue.sshAddr, 
-                DeviceQueue.webUrl
-            ).filter(
-                or_(
-                    DeviceQueue.state == 'in-queue', 
-                    DeviceQueue.state == 'in-use'
-                ), 
-                DeviceQueue.owner == self.id
-            ).all)
+        return as_future(self.get_owned_devices(session).all)
+
+    def has_roles(self, role):
+        for r in self.roles:
+            if r.name == role:
+                return True
+        return False
+
+    def try_to_claim_device(self, session, device_type):
+        if type(device_type) is not int:
+            device_type = device_type.id
+        device = session.query(
+            DeviceQueue
+        ).filter_by(
+            type=device_type,
+            state='ready'
+        ).first()
+        if device:
+            for uq in session.query(UserQueue).filter_by(userId=self.id, type=device_type):
+                session.delete(uq)
+            device.state = 'in-queue'
+            session.commit()
+            self.assigned_device_callback(device)
+
+    def assigned_device_callback(self, device):
+        pass
 
 
 class Role(db.Model):
     __tablename__ = 'roles'
     id = Column(Integer(), primary_key=True)
     name = Column(String(50), unique=True)
+
 
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
@@ -58,26 +84,21 @@ class DeviceType(db.Model):
 
     @staticmethod
     def get_queues(session):
-        return session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.name).all()
+        return session.query(
+            DeviceType.id,
+            DeviceType.name,
+            func.count(UserQueue.userId)
+        ).select_from(DeviceType).join(
+            UserQueue,
+            isouter=True
+        ).group_by(
+            DeviceType.id,
+            DeviceType.name
+        )
 
-    # TODO - honestly I don't know why this refuses to async
-    # @staticmethod
-    # async def get_queues_async(session):
-    #     return await as_future(session.query(
-    #             DeviceType.id, 
-    #             DeviceType.name, 
-    #             func.count(
-    #                 UserQueue.userId
-    #             )
-    #         ).select_from(
-    #             DeviceType
-    #         ).join(
-    #             UserQueue, 
-    #             isouter=True
-    #         ).group_by(
-    #             DeviceType.name
-    #         ).all)
-        
+    @staticmethod
+    def get_queues_async(session):
+        return as_future(DeviceType.get_queues(session).all)
 
 
 class UserQueue(db.Model):
@@ -85,6 +106,7 @@ class UserQueue(db.Model):
     id = Column(Integer, primary_key=True)
     userId = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
+
 
 class DeviceQueue(db.Model):
     __tablename__ = "devicequeue"
@@ -98,19 +120,30 @@ class DeviceQueue(db.Model):
     expiration = Column(DateTime)
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
+    type_obj = relationship("DeviceType")
 
     @staticmethod
     def get_all_web_urls(session):
-        return session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state='in-use')
+        return session.query(
+            User.name,
+            DeviceQueue.webUrl
+        ).join(
+            User.deviceQueueEntry
+        ).filter_by(state='in-use')
 
     @staticmethod
     def get_all_ro_urls(session):
-        return session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state='in-use')
+        return session.query(
+            User.name,
+            DeviceQueue.roUrl
+        ).join(
+            User.deviceQueueEntry
+        ).filter_by(state='in-use')
 
     @staticmethod
     def get_all_web_urls_async(session):
-        return as_future(partial(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by, state='in-use'))
+        return as_future(DeviceQueue.get_all_web_urls(session).all)
 
     @staticmethod
     def get_all_ro_urls_async(session):
-        return as_future(partial(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by, state='in-use'))
+        return as_future(DeviceQueue.get_all_ro_urls(session).all)

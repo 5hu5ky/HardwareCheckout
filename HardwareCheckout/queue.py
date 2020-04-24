@@ -1,132 +1,72 @@
-from sqlalchemy import func
-from tornado.escape import json_decode
-from tornado.web import authenticated
-import tornado.websocket
+from tornado.web import authenticated, RequestHandler
+from tornado.websocket import WebSocketHandler
+from tornado_sqlalchemy import SessionMixin
 
-from .models import DeviceQueue, DeviceType, User, UserQueue, db
-from .webutil import Blueprint, UserWSHandler, make_session
+from .models import DeviceType, UserQueue, User
+from .webutil import Blueprint, Messenger, UserBaseHandler
 
 queue = Blueprint()
 
-@queue.route("/")
-class QueueWSHandler(UserWSHandler):
-    waiters = dict()
+user_queue_notifiers = {}
 
+
+def on_user_assigned_device(user, device):
+    # TODO: set timer
+    if user.id in user_queue_notifiers:
+        device = {'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
+        message = {'type': 'new_device', 'device': device}
+        user_queue_notifiers[user.id].send(message)
+
+
+# Assign here to avoid cyclical import
+User.assigned_device_callback = on_user_assigned_device
+
+
+@queue.route("/event")
+class QueueWSHandler(UserBaseHandler, WebSocketHandler):
     def get_compression_options(self):
         # Non-None enables compression with default options.
         return {}
 
     @authenticated
-    def open(self):
-        self.id = self.current_user.id
-        if self.__class__.waiters.get(self.current_user.id, False):
-            self.__class__.waiters[self.current_user.id] = [self]
-        else:
-            self.__class__.waiters[self.current_user.id].append(self)
-        self.check_queue()
+    async def open(self):
+        if self.current_user.id not in user_queue_notifiers:
+            user_queue_notifiers[self.current_user.id] = Messenger()
+        notifier = user_queue_notifiers[self.current_user.id]
+        devices = self.current_user.get_owned_devices(self.session)
+        devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
+        self.write_message({'type': 'all_devices', 'devices': devices})
+        while True:
+            message = await notifier.receive()
+            self.write_message(message)
 
-    def on_close(self):
-        self.__class__.waiters[self.id].remove(self)
+    def on_message(self, message):
+        pass
 
-    @classmethod
-    def notify_user(cls, userId, error="success", **kwargs):
-        kwargs["error"] = error
-        user = cls.waiters.get(userId, None)
-        if user is None:
-            raise KeyError("User not found")
-        for tabs in user:
-            try:
-                tabs.write_message(kwargs)
-            except Exception:
-                pass
 
-    @classmethod
-    def notify_all(cls, error="success", **kwargs):
-        kwargs['error'] = error
-        for waiter in cls.waiters.values():
-            try:
-                waiter.write_message(kwargs)
-            except Exception:
-                pass
+@queue.route('/')
+class ListAllQueuesHandler(SessionMixin, RequestHandler):
+    async def get(self):
+        queues = await DeviceType.get_queues_async(self.session)
+        self.write({'result': [{'id': id, 'name': name, 'size': size} for id, name, size in queues]})
 
-    async def on_message(self, message):
-        parsed = json_decode(message)
-        
-        try:
-            msgType = parsed["type"]
-            uid = parsed.get("id", None)
-        except (AttributeError, KeyError):
-            try:
-                self.write_message({"error":"invalid message"})
-            except Exception:
-                pass
+
+@queue.route(r'/(\d+)')
+class SingleQueueHandler(UserBaseHandler):
+    async def get(self, id):
+        id = int(id)
+        # TODO: maybe move this into an async model method
+        self.write({'result': [{'name': name} for name, in self.session.query(User.name).select_from(UserQueue).join(User).filter(UserQueue.type == id).order_by(UserQueue.id)]})
+
+    @authenticated
+    async def post(self, id):
+        id = int(id)
+        entry = self.session.query(UserQueue).filter_by(userId=self.current_user.id, type=id).first()
+        if entry:
+            self.write({'result': 'success'})
             return
-
-        if msgType == "list":
-            msg = self.list_queues()
-        elif msgType == "post":
-            if uid is None:
-                self.notify_user(self.id, error="invalid id")
-                return
-            if self.handle_post(uid):
-                self.notify_all(**self.list_queues())
-        elif msgType == "delete":
-            if uid is None:
-                self.notify_user(self.id, error="invalid id")
-            if self.handle_delete(id):
-                self.notify_all(**self.list_queues())
-        else:
-            self.notify_user(self.id, error="invalid message")
-
-        self.write_message(msg)
-        return
-
-    def list_queues(self):
-        with self.make_session() as session:
-            # TODO make async
-            queue = DeviceType.get_queues(session)
-        return {'result': [{'id': id, 'name': name, 'size': size} for id, name, size in queue]}
-
-    def handle_post(self, QueueID):
-        # TODO make async
-        with self.make_session() as session:
-            entry = session.query(UserQueue).filter_by(userId=self.id, type=QueueID).first()
-            #check to see if they are already in the queue
-            if not entry:
-                # if they aren't add them
-                entry = UserQueue(userId=self.id, type=QueueID)
-                session.add(entry)
-                return True
-        return False
-
-    def handle_delete(self, QueueID):
-        # TODO make async
-        with self.make_session() as session:
-            entry = session.query(UserQueue).filter_by(userId=self.id, type=QueueID).first()
-            if entry:
-                session.delete(entry)
-                return True
-        return False
-
-    def check_queue(self):
-        # TODO make async
-        with self.make_session() as session:
-            deviceList = session.query(DeviceQueue.id).filter_by(owner=self.id).all()
-        for device in deviceList:
-            self.send_device_info_to_user(self.id, device)
-
-    @classmethod
-    def send_device_info_to_user(cls, userId, deviceId):
-        # TODO make async
-        with make_session() as session:
-            deviceInfo = session.query(DeviceQueue.sshAddr, DeviceQueue.webUrl, DeviceQueue.name).filter_by(userId=userId).all()
-        for devices in deviceInfo:
-            cls.notify_user(userId, error="device_available", ssh=devices[0], web=devices[1], device=devices[2])
-
-    # @classmethod
-    # def send_device_info_to_user(cls, userId, deviceId):
-    #     # TODO make async
-    #     with make_session() as session:
-    #         deviceInfo = session.query(DeviceQueue.sshAddr, DeviceQueue.webUrl).filter_by(userId=userId).all()
-    #     for devices in deviceInfo:
-    #         cls.notify_user(userId, {"status":"device_lost"})
+        entry = UserQueue(userId=self.current_user.id, type=id)
+        self.session.add(entry)
+        self.session.commit()
+        self.current_user.try_to_claim_device(self.session, id)
+        self.write({'result': 'success'})
