@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from HardwareCheckout import db, create_app
+from HardwareCheckout import create_app
 from HardwareCheckout.models import DeviceQueue, Role, DeviceType
 from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
