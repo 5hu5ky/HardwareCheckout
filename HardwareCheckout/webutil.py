@@ -20,6 +20,8 @@ class UserBaseHandler(SessionMixin, RequestHandler):
             return self.session.query(User).filter_by(id=user_id).one()
         except NoResultFound:
             return False
+        except TypeError:
+            return False
 
 
 class DeviceBaseHandler(SessionMixin, RequestHandler):
@@ -95,17 +97,34 @@ def noself(dict):
     return {k: v for k, v in dict.items() if k != 'self'}
 
 
-class Messenger:
+class Waiters:
     def __init__(self):
-        self.condition = Condition()
+        self.waiters = dict()
+
+    def __getitem__(self, id):
+        if id not in self.waiters:
+            self.waiters[id] = WaiterBucket()
+        return self.waiters[id]
+
+    def broadcast(self, message):
+        for bucket in self.waiters.values():
+            bucket.send(message)
+
+
+class WaiterBucket:
+    def __init__(self):
+        self.bucket = set()
+
+    def __getattr__(self, name):
+        return getattr(self.bucket, name)
+
+    def remove(self, waiter):
+        if waiter in self.bucket:
+            self.bucket.remove(waiter)
 
     def send(self, message):
-        self.message = message
-        self.condition.notify_all()
-
-    async def receive(self):
-        await self.condition.wait()
-        return self.message
+        for waiter in self.bucket:
+            waiter.on_sent(message)
 
 
 class Timer():
