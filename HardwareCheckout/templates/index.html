@@ -4,7 +4,6 @@
 <link rel= "stylesheet" type= "text/css" href="{{ static_url('styles/term.css') }}">
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="{{ static_url('js/term.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
 {% end %}
 
 {% block content %}
@@ -13,7 +12,7 @@
             <h6>Devices available:</h6>
             <ul>
                 {% for device in devices %}
-                <li>
+                <li id="{{ device['name'] }}">
                     {{ device['name'] }}
                     <ul>
                         <li>SSH: {{ device['sshAddr'] }}</li>
@@ -79,46 +78,6 @@
         height: 300,
         channel: "carhackingvillage3"
     });
-
-    let socket = io("/queue");
-    socket.on("json", function(msg) {
-        
-        get_devices().catch(e => location.reload());
-    });
-
-    function notify(msg) {
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(msg);
-        } else {
-            alert(msg);
-        }
-    }
-
-    async function get_devices() {
-        let response = await fetch("/user/device");
-        let json = await response.json();
-        let domDevices = document.getElementById("devices");
-        let domList = domDevices.querySelector("ul");
-        domList.innerHTML = "";
-        domDevices.style.display = json.result.length === 0 ? "none" : "block";
-        for (let device of json.result) {
-            let li = document.createElement("li");
-            li.innerText = device.name;
-            let ul = document.createElement("ul");
-            let domSSH = document.createElement("li");
-            domSSH.innerText = "SSH: " + device.sshAddr;
-            let domWeb = document.createElement("li");
-            let domWebLink = document.createElement("a");
-            domWebLink.href = device.webUrl;
-            domWebLink.innerText = device.webUrl;
-            domWeb.innerText = "Web: ";
-            domWeb.appendChild(domWebLink);
-            ul.appendChild(domSSH);
-            ul.appendChild(domWeb);
-            li.appendChild(ul);
-            domList.appendChild(li);
-        }
-    }
 
 </script>
 {% end %}

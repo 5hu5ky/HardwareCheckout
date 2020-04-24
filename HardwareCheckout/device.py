@@ -37,8 +37,6 @@ from .queue import QueueWSHandler
 device = Blueprint()
 
 
-
-
 @device.route('/state')
 class DeviceStateHandler(DeviceWSHandler):
     __timer = None
@@ -57,10 +55,6 @@ class DeviceStateHandler(DeviceWSHandler):
         try:
             msgType = parsed["type"]
         except (AttributeError, KeyError):
-            # try:
-            #     self.write_message({"error":"invalid message"})
-            # except Exception:
-            #     pass
             return
         
         if msgType == "put":
@@ -89,18 +83,14 @@ class DeviceStateHandler(DeviceWSHandler):
         # write to the db
         with self.make_session() as session:
             session.add(device)
-        
-        # return if going into fail state
-        if state in ('provision-failed', 'deprovision-failed'):
-            return {'result', 'success'}
 
-        # if we are already in a failure state
+        # if we are in a failure state
         if device.state in ('provision-failed', 'deprovision-failed'):
-            return {'result': 'error', 'error': 'device disabled'}
+            return 
 
         # if the new status is invalid
         if state not in ('is-provisioned', 'is-deprovisioned', 'client-connected'):
-            return {'result': 'error', 'error': 'invalid state'}, 400
+            return
         
         # if the new status is provisioned and we are correctly in want provision
         if state == 'is-provisioned' and device.state == 'want-provision':
@@ -116,10 +106,14 @@ class DeviceStateHandler(DeviceWSHandler):
             if state != 'is-deprovisioned':
                 self.send_device_state('want-deprovision')
             else:
-                return {'result': 'success'}
+                return
         elif state not in ('is-provisioned', 'client-connected'):
             self.send_device_state('want-provision')
-        return {'result': 'success'}
+
+
+    def send_device_state(self, state, **kwargs):
+        kwargs['state'] = state
+        return self.write_message(kwargs)
 
     @staticmethod
     def deprovision_device(device):
@@ -203,15 +197,11 @@ class DeviceStateHandler(DeviceWSHandler):
             DeviceStateHandler.send_message_to_owner(device, 'device_reclaimed')
             DeviceStateHandler.deprovision_device(device)
 
-    def send_device_state(self, state, **kwargs):
-        kwargs['state'] = state
-        return self.write_message(kwargs)
-
     @staticmethod
     def send_message_to_owner(device, message):
         with make_session() as session:
             name = session.query(DeviceType.name).filter_by(id=device.type).one()
-        QueueWSHandler.notify_user(device.owner,{'message': message, 'device': name})
+        QueueWSHandler.notify_user(device.owner, error=message, device=name)
 
     @classmethod
     def push_timer(cls, deviceID, timer):
