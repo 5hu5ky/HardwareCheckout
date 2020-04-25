@@ -155,7 +155,7 @@ class DeviceStateHandler(DeviceWSHandler):
             next_user = session.query(UserQueue).filter_by(type=deviceType).order_by(UserQueue.id).first()
             if next_user:
                 session.delete(next_user)
-                return DeviceStateHandler.device_in_queue(deviceID, next_user.id)
+                return DeviceStateHandler.device_in_queue(deviceID, next_user.userId)
 
     @staticmethod
     def device_in_queue(deviceID, next_user):
