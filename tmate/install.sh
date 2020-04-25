@@ -16,7 +16,7 @@ if [ -f $SCRIPTPATH/connected.py.bak ]; then
     mv $SCRIPTPATH/connected.py.bak $SCRIPTPATH/connected.py
 fi
 
-sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/device.py
+sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/device.py
 sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/connected.py
 
 sudo install -m 755 -d /opt/hc-client
