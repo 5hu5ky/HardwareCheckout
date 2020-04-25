@@ -53,6 +53,12 @@ var updater = {
                 } else if (msg.reason == "normal") {
                     updater.notify("Thank you for participating in the virtual CHV CTF. If you would like more time, you may enter the queue again.");
                 }
+            } else if (msg.type == "queue_grow") {
+                let count = parseInt(document.getElementById("qs_" + msg.queue).innerText);
+                document.getElementById("qs_" + msg.queue).innerText = (count + 1)
+            } else if (msg.type == "queue_shrink") {
+                let count = parseInt(document.getElementById("qs_" + msg.queue).innerText);
+                document.getElementById("qs_" + msg.queue).innerText = (count - 1)
             } else if (msg.error) {
                 updater.notify(msg.error);
             }

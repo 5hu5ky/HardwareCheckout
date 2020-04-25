@@ -26,7 +26,6 @@ def create_app():
         ],
         login_url="/login",
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
-        login_url='/login',
         template_path="HardwareCheckout/templates/",
         static_path="HardwareCheckout/static/",
         db=SQLAlchemy(url=db_path),

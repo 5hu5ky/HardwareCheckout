@@ -33,7 +33,7 @@
                     <form action="/queue/{{ queue['id'] }}" method="POST">
                     {{ queue['name'] }}
                     <br>
-                    {{ queue['size'] }} in queue.
+                    <span id="qs_{{ queue['id'] }}">{{ queue['size'] }}</span> in queue.
                     <input type="submit" value="Join Queue">
                     </form>
                 </div>
