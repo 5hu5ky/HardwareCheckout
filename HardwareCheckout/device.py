@@ -177,7 +177,7 @@ class DeviceStateHandler(DeviceWSHandler):
         with make_session() as session:
             device = session.query(DeviceQueue).filter_by(id=deviceID).first()
             user = session.query(User).filter_by(id=next_user).first()
-            User.send_device_info_to_user(user, device)
+            User.assigned_device_callback(user, device)
             
 
     @staticmethod
