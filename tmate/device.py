@@ -47,6 +47,7 @@ class Client(object):
 
     @gen.coroutine
     def run(self):
+        self.provision()
         while True:
             msg = yield self.ws.read_message()
             if msg is None:
@@ -73,28 +74,14 @@ class Client(object):
             return
         elif state == "want-provision":
             if not self.is_provisioned:
-                # create/overwrite config file
-                with open(self.profile['config_file'], 'w') as fout:
-                    fout.write('[config]')
-
-                returnCode = self.run_external(['provision.sh'])
-                if returnCode != 0:
+                if not self.provision():
                     print("Error: provision.sh returned {}".format(returnCode))
                     self.ws.write_message({'status':'provision-failed'})
                     return
-                
-                connectionInfo = ConfigParser()
-                connectionInfo.read(self.profile['config_file'])
-                self.ssh = connectionInfo['config']['ssh']
-                self.web = connectionInfo['config']['web']
-                self.web_ro = connectionInfo['config']['web_ro']
-                self.is_provisioned = True
-
             self.ws.write_message({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro})
         elif state == 'want-deprovision':
             if self.is_provisioned:
-                returnCode = self.run_external(['deprovision.sh'])
-                if returnCode != 0:
+                if not self.deprovision():
                     print("Error: deprovision.sh returned {}".format(returnCode))
                     self.ws.write_message({'status':'deprovision-failed'})
                     return
@@ -105,6 +92,28 @@ class Client(object):
 
         return            
 
+    def provision(self):
+        # create/overwrite config file
+        with open(self.profile['config_file'], 'w') as fout:
+            fout.write('[config]')
+
+        returnCode = self.run_external(['provision.sh'])
+        if returnCode != 0:
+            return False
+        
+        connectionInfo = ConfigParser()
+        connectionInfo.read(self.profile['config_file'])
+        self.ssh = connectionInfo['config']['ssh']
+        self.web = connectionInfo['config']['web']
+        self.web_ro = connectionInfo['config']['web_ro']
+        self.is_provisioned = True
+        return True
+
+    def deprovision(self):
+        returnCode = self.run_external(['deprovision.sh'])
+        if returnCode != 0:
+            return False
+        return True
 
     def run_external(self, args):
         def preexec():
