@@ -22,6 +22,7 @@ class MainHandler(UserBaseHandler):
                 show_streams = True
             if self.current_user:
                 devices = await self.current_user.get_owned_devices_async(session)
+                devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
             else:
                 devices = []
 
