@@ -3,7 +3,7 @@ from functools import partial
 from contextlib import contextmanager
 
 from sqlalchemy.orm.exc import NoResultFound
-from tornado.ioloop import IOLoop
+from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.locks import Condition
 from tornado.web import RequestHandler, URLSpec
 from tornado.websocket import WebSocketHandler
@@ -137,7 +137,7 @@ class Timer():
         self.__args = args if args else list()
         self.__kwargs = kwargs if kwargs else dict()
         if self.__repeat:
-            self.__timer = IOLoop.current().PeriodicCallback(partial(self.__callback_wrapper, self), self.__timeout * 1000)
+            self.__timer = PeriodicCallback(partial(self.__callback_wrapper, self), self.__timeout * 1000)
 
     def restart(self):
         if self.__timer is not None:
