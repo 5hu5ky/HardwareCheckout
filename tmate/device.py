@@ -3,6 +3,7 @@ import os
 import argparse
 from configparser import ConfigParser
 from subprocess import Popen
+from base64 import b64encode
 
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado import gen
@@ -26,7 +27,7 @@ class Client(object):
         self.web = ''
         self.web_ro = ''
 
-        self.auth_hdr = {'Authorization': 'Basic ' + b64encode((username + ':' + password).encode()).decode()}
+        self.auth_hdr = {'Authorization': 'Basic ' + b64encode((profile['username'] + ':' + profile['password']).encode()).decode()}
 
         self.connect()
         PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
@@ -162,7 +163,7 @@ if __name__ == "__main__":
 
     profile = get_profile(args.profile)
     if profile is None:
-        return 1
+        exit(1)
 
     #TODO change to wss
     client = Client("ws://localhost:8080/device", 5)
