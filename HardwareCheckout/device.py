@@ -148,10 +148,10 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def check_for_new_owner(deviceID, deviceType):
         with make_session() as session:
-            next_user = session.query(UserQueue).filter_by(type=device.type).order_by(UserQueue.id).first()
+            next_user = session.query(UserQueue).filter_by(type=deviceType).order_by(UserQueue.id).first()
             if next_user:
                 session.delete(next_user)
-                return DeviceStateHandler.device_in_queue(deviceID, next_user)
+                return DeviceStateHandler.device_in_queue(deviceID, next_user.id)
 
     @staticmethod
     def device_in_queue(deviceID, next_user):
