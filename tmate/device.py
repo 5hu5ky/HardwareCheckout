@@ -47,7 +47,8 @@ class Client(object):
 
     @gen.coroutine
     def run(self):
-        self.provision()
+        if not self.is_provisioned():
+            self.provision()
         while True:
             msg = yield self.ws.read_message()
             if msg is None:
