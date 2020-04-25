@@ -121,7 +121,7 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def deprovision_device(deviceID):
         with make_session() as session:
-            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()
             device.state = 'want-deprovision'
             device.expiration = None
             session.add(device)
@@ -129,7 +129,7 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def provision_device(deviceID):
         with make_session() as session:
-            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()
             device.state = 'want-provision'
             device.expiration = None
             session.add(device)
@@ -137,7 +137,7 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def device_ready(deviceID):
         with make_session() as session:
-            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()
             device.state = 'ready'
             device.expiration = None
             device.owner = None
@@ -156,7 +156,7 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def device_in_queue(deviceID, next_user):
         with make_session() as session:
-            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()
             device.state = 'in-queue'
             device.owner = next_user
             session.add(device)
@@ -183,7 +183,7 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def device_in_use(deviceID):
         with make_session() as session:
-            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()
             device.state = 'in-use'
             session.add(device)
         
