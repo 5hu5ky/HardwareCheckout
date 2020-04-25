@@ -96,7 +96,7 @@ class Client(object):
     def provision(self):
         # create/overwrite config file
         with open(self.profile['config_file'], 'w') as fout:
-            fout.write('[config]')
+            fout.write('[config]\n')
 
         returnCode = self.run_external(['provision.sh'])
         if returnCode != 0:
