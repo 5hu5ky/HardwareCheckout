@@ -29,7 +29,7 @@ from tornado.escape import json_decode
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
-from .models import DeviceQueue, DeviceType, UserQueue
+from .models import DeviceQueue, DeviceType, UserQueue, User
 from .webutil import Blueprint, DeviceWSHandler, Timer, make_session
 from .queue import QueueWSHandler
 
@@ -174,7 +174,10 @@ class DeviceStateHandler(DeviceWSHandler):
             old_timer.stop()
             del old_timer
             DeviceStateHandler.push_timer(deviceID, timer)
-        QueueWSHandler.send_device_info_to_user(next_user, deviceID)
+        with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()
+            user = session.query(User).filter_by(id=next_user).first()
+            User.send_device_info_to_user(user, device)
             
 
     @staticmethod
