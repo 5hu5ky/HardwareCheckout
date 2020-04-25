@@ -86,7 +86,7 @@ class DeviceStateHandler(DeviceWSHandler):
             session.add(device)
 
         # if we are in a failure state
-        if device.state in ('provision-failed', 'deprovision-failed'):
+        if device.state in ('provision-failed', 'deprovision-failed', 'keep-alive'):
             return 
 
         # if the new status is invalid

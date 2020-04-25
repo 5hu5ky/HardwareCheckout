@@ -65,7 +65,7 @@ class Client(object):
         if self.ws is None:
             self.connect()
         else:
-            self.ws.write_message("keep alive")
+            self.ws.write_message({"status":"keep-alive"})
 
     def handle_message(self, message):
         #TODO make async

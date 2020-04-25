@@ -83,6 +83,7 @@ class SingleQueueHandler(UserBaseHandler):
         id = int(id)
         # TODO: maybe move this into an async model method
         self.write({'result': [{'name': name} for name, in self.session.query(User.name).select_from(UserQueue).join(User).filter(UserQueue.type == id).order_by(UserQueue.id)]})
+        self.redirect(self.reverse_url("main"))
 
     @authenticated
     async def post(self, id):
@@ -96,3 +97,4 @@ class SingleQueueHandler(UserBaseHandler):
         self.session.commit()
         self.current_user.try_to_claim_device(self.session, id)
         self.write({'result': 'success'})
+        self.redirect(self.reverse_url("main"))
