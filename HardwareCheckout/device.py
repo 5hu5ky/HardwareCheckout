@@ -41,7 +41,6 @@ class DeviceStateHandler(DeviceWSHandler):
     __timer = None
     __timer_dict = dict()
 
-    @authenticated
     def open(self):
         self.device = self.check_authentication()
         if self.device is False:
