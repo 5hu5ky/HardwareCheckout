@@ -121,7 +121,7 @@ def get_profile(profileName):
     config.read('/opt/hc-client/.config.ini')
 
     try:
-        profile = config[profileName]
+        profile = dict(config[profileName])
     except KeyError:
         return None
     
@@ -166,4 +166,4 @@ if __name__ == "__main__":
         exit(1)
 
     #TODO change to wss
-    client = Client("ws://localhost:8080/device", profile)
+    client = Client("ws://localhost:8080/device/state", profile)
