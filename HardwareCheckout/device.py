@@ -53,20 +53,19 @@ class DeviceStateHandler(DeviceWSHandler):
     def on_message(self, message):
         parsed = json_decode(message)
 
+        # try:
+        #     msgType = parsed["type"]
+        # except (AttributeError, KeyError):
+        #     return
+        
         try:
-            msgType = parsed["type"]
+            state    = parsed["state"]
+            ssh_addr = parsed.get("ssh", None)
+            web_addr = parsed.get("web", None)
+            webro_addr=parsed.get("webro", None)
         except (AttributeError, KeyError):
             return
-        
-        if msgType == "put":
-            try:
-                state    = parsed["state"]
-                ssh_addr = parsed.get("ssh", None)
-                web_addr = parsed.get("web", None)
-                webro_addr=parsed.get("webro", None)
-            except KeyError:
-                return
-            self.device_put(state, ssh=ssh_addr, web=web_addr, web_ro=webro_addr)
+        self.device_put(state, ssh=ssh_addr, web=web_addr, web_ro=webro_addr)
 
     def device_put(self, state, ssh=None, web=None, web_ro=None):
         # always update the urls if available
