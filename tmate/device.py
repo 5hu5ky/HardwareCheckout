@@ -9,6 +9,7 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado import gen
 from tornado.websocket import websocket_connect
 from tornado.escape import json_decode
+from tornado.httpclient import HTTPRequest
 
 
 class Client(object):
@@ -37,7 +38,7 @@ class Client(object):
     def connect(self):
         print("trying to connect")
         try:
-            self.ws = yield websocket_connect(self.url)
+            self.ws = yield websocket_connect(HTTPRequest(url=self.url, headers=self.auth_hdr))
         except Exception:
             print("connection error")
         else:
