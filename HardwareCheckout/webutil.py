@@ -46,26 +46,21 @@ class DeviceBaseHandler(SessionMixin, RequestHandler):
 
 
 class DeviceWSHandler(SessionMixin, WebSocketHandler):
-    def get_current_user(self):
-        # not allowed to be async
+    def check_authentication(self):
         if 'Authorization' not in self.request.headers:
-            return self.unauthorized()
+            return False
         if not self.request.headers['Authorization'].startswith('Basic '):
-            return self.unauthorized()
+            return False
         name, password = b64decode(self.request.headers['Authorization'][6:]).decode().split(':', 1)
         try:
             with self.make_session() as session:
                 device = session.query(DeviceQueue).filter_by(name=name).one()
             if not check_password_hash(device.password, password):
-                return self.unauthorized()
+                return False
             return device
         except NoResultFound:
-            return self.unauthorized()
+            return False
 
-    def unauthorized(self):
-        self.set_header('WWW-Authenticate', 'Basic realm="CarHackingVillage"')
-        self.set_status(401)
-        return False
 
 
 class Blueprint:

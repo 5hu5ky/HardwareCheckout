@@ -43,10 +43,13 @@ class DeviceStateHandler(DeviceWSHandler):
 
     @authenticated
     def open(self):
+        self.device = self.check_authentication()
+        if self.device is False:
+            self.close()
+            return
         if self.__class__.__timer is None:
             self.__class__.__timer = Timer(self.__class__.__callback, True)
             self.__class__.__timer.start()
-        self.device = self.current_user
 
     def on_message(self, message):
         parsed = json_decode(message)
