@@ -1,162 +1,168 @@
 #!/usr/bin/env python3
-import os, os.path, sys
-from base64 import b64encode
+import os
+import argparse
 from configparser import ConfigParser
 from subprocess import Popen
 
-from socketio import Client
-
-if len(sys.argv) != 2:
-    print('Usage: device.py <profile>', file=sys.stderr)
-    sys.exit(1)
-
-config = ConfigParser()
-config.read('/opt/hc-client/.config.ini')
-
-try:
-    config = config[sys.argv[1]]
-except KeyError as e:
-    print('Section {} not found in config.ini'.format(e.args[0]))
-    sys.exit(1)
-
-try:
-    username = config['username']
-    password = config['password']
-    data_dir = os.path.realpath(config['data_dir'])
-except KeyError as e:
-    print('Missing required parameter {} in config.ini'.format(e.args[0]))
-    sys.exit(1)
-
-if ':' in username:
-    print('Colon character (:) is not allowed inside of a username per RFC 7617', file=sys.stderr)
-    sys.exit(1)
-
-try:
-    uid = config['uid']
-except KeyError:
-    uid = os.getuid()
-
-try:
-    gid = config['gid']
-except KeyError:
-    gid = os.getgid()
-
-try:
-    use_docker = config['use_docker']
-except KeyError:
-    use_docker = 0
-
-install_dir = os.path.abspath(os.path.realpath(sys.argv[0]) + os.path.sep + '..')
-os.makedirs(data_dir, mode=0o700, exist_ok=True)
-
-try:
-    os.chown(data_dir, uid, gid)
-except PermissionError:
-    print('Failed to chown data directory, continuing anyways...')
-
-os.environ['DEVICE_NAME'] = sys.argv[1]
-os.environ['INSTALL_DIR'] = install_dir
-os.environ['DATA_DIR'] = data_dir
-os.environ['TMATE_SOCK'] = os.path.abspath(data_dir + os.path.sep + 'tmate.sock')
-os.environ['CONFIG_FILE'] = os.path.abspath(data_dir + os.path.sep + 'config')
-os.environ['EXPIRATION_TIMESTAMP'] = os.path.abspath(data_dir + os.path.sep + 'expiration-timestamp')
-os.environ['USE_DOCKER'] = str(use_docker)
-
-auth_hdr = {'Authorization': 'Basic ' + b64encode((username + ':' + password).encode()).decode()}
-
-c = Client()
-
-initial_connect = False
-is_provisioned = False
-error = 1
-
-ssh = ''
-web = ''
-web_ro = ''
+from tornado.ioloop import IOLoop, PeriodicCallback
+from tornado import gen
+from tornado.websocket import websocket_connect
+from tornado.escape import json_decode
 
 
-def run_external(args):
-    def preexec():
-        os.setgid(gid)
-        os.setuid(uid)
-        os.chdir(data_dir)
+class Client(object):
+    states = ['ready', 'in-queue', 'in-use', 
+            'want-deprovision', 'is-deprovisioned', 
+            'want-provision', 'is-provisioned']
 
-    args[0] = install_dir + os.path.sep + args[0]
-    proc = Popen(args, preexec_fn=preexec)
-    proc.wait()
-    return proc.returncode
+    def __init__(self, url, profile, timeout=300):
+        self.url = url
+        self.timeout = timeout
+        self.ioloop = IOLoop.instance()
+        self.ws = None
+        self.profile = profile
+        self.is_provisioned = False
+        self.ssh = ''
+        self.web = ''
+        self.web_ro = ''
 
+        self.auth_hdr = {'Authorization': 'Basic ' + b64encode((username + ':' + password).encode()).decode()}
 
-@c.on('connect', namespace='/device')
-def device_connected():
-    global initial_connect
-    initial_connect = True
-    print('Device connected to server')
+        self.connect()
+        PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
+        self.ioloop.start()
 
-
-@c.on('disconnect', namespace='/device')
-def device_disconnected():
-    if not initial_connect:
-        print('FATAL ERROR: Server rejected connection', file=sys.stderr)
-        print('Verify that the DEVICENAME and PASSWORD environment variables are correct and try again', file=sys.stderr)
-        c.disconnect()
-    else:
-        print('Device disconnected, should reconnect soon')
-        print('If not, try CTRL-c and verify DEVICENAME and PASSWORD environment variables')
-
-
-@c.on('json', namespace='/device')
-def handle_response(data):
-    global is_provisioned, error
-    global ssh, web, web_ro
-    print('Received data from server: %r' % data)
-    if 'state' not in data:
-        return
-    if data['state'] == 'want-provision':
-        print('Server wants a provision')
-        if not is_provisioned:
-            with open(os.environ['CONFIG_FILE'], 'w') as f:
-                print('[config]', file=f)
-            print('Provisioning...')
-            code = run_external(['provision.sh'])
-            if code:
-                print('ERROR: provision.sh failed with exit code %d' % code, file=sys.stderr)
-                send('provision-failed')
-                return
-            config = ConfigParser()
-            config.read(os.environ['CONFIG_FILE'])
-            ssh = config['config']['ssh']
-            web = config['config']['web']
-            web_ro = config['config']['web_ro']
-            is_provisioned = True
+    @gen.coroutine
+    def connect(self):
+        print("trying to connect")
+        try:
+            self.ws = yield websocket_connect(self.url)
+        except Exception:
+            print("connection error")
         else:
-            print('Already provisioned, nothing to do')
-        send('is-provisioned', ssh=ssh, web=web, web_ro=web_ro)
-    elif data['state'] == 'want-deprovision':
-        print('Server wants a deprovision')
-        if is_provisioned:
-            print('Deprovisioning...')
-            code = run_external(['deprovision.sh'])
-            if code:
-                print('ERROR: deprovision.sh failed with exit code %d' % code, file=sys.stderr)
-                send('deprovision-failed')
-                return
-            is_provisioned = False
+            print("connected")
+            self.run()
+
+    @gen.coroutine
+    def run(self):
+        while True:
+            msg = yield self.ws.read_message()
+            if msg is None:
+                print("connection closed")
+                self.ws = None
+                break
+            else:
+                try:
+                    yield self.handle_message(msg)
+                except Exception:
+                    print("Error while handling message")
+
+    def keep_alive(self):
+        if self.ws is None:
+            self.connect()
         else:
-            print('Already deprovisioned, nothing to do')
-        send('is-deprovisioned')
-    elif data['state'] == 'update-expiration':
-        print('Updating expiration timestamp')
-        with open(os.environ['EXPIRATION_TIMESTAMP'], 'w') as f:
-            f.write(str(int(data['expiration'])))
+            self.ws.write_message("keep alive")
+
+    def handle_message(self, message):
+        #TODO make async
+        data = json_decode(message)
+        state = data.get("state", False)
+        if not state or state not in self.states:
+            return
+        elif state == "want-provision":
+            if not self.is_provisioned:
+                # create/overwrite config file
+                with open(self.profile['config_file'], 'w') as fout:
+                    fout.write('[config]')
+
+                returnCode = self.run_external(['provision.sh'])
+                if returnCode != 0:
+                    print("Error: provision.sh returned {}".format(returnCode))
+                    self.ws.write_message({'status':'provision-failed'})
+                    return
+                
+                connectionInfo = ConfigParser()
+                connectionInfo.read(self.profile['config_file'])
+                self.ssh = connectionInfo['config']['ssh']
+                self.web = connectionInfo['config']['web']
+                self.web_ro = connectionInfo['config']['web_ro']
+                self.is_provisioned = True
+
+            self.ws.write_message({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro})
+        elif state == 'want-deprovision':
+            if self.is_provisioned:
+                returnCode = self.run_external(['deprovision.sh'])
+                if returnCode != 0:
+                    print("Error: deprovision.sh returned {}".format(returnCode))
+                    self.ws.write_message({'status':'deprovision-failed'})
+                    return
+            self.ws.write_message({'status':'is-deprovisioned'})
+        elif state == 'update-expiration':
+            with open(self.profile['timestamp_file'], 'w') as fout:
+                fout.write(str(int(data['expiration'])))
+
+        return            
 
 
-def send(state, **kwargs):
-    kwargs['state'] = state
-    print('Sending %r to server' % kwargs)
-    c.send(kwargs, namespace='/device')
+    def run_external(self, args):
+        def preexec():
+            os.setgid(self.profile['gid'])
+            os.setuid(self.profile['uid'])
+            os.chdir(self.profile['data_dir'])
+
+        args[0] = os.path.join(self.profile['install_dir'], args[0])
+        proc = Popen(args, preexec_fn=preexec)
+        proc.wait()
+        return proc.returncode
+
+def get_profile(profileName):
+    config = ConfigParser()
+    config.read('/opt/hc-client/.config.ini')
+
+    try:
+        profile = config[profileName]
+    except KeyError:
+        return None
+    
+    if not profile.get('username', False)\
+        or not profile.get('password', False) \
+        or not profile.get('data_dir', False)\
+        or ':' in profile['username']:
+        return None
+
+    profile['data_dir'] = os.path.realpath(profile['data_dir'])
+    profile['uid'] = profile.get('uid', os.getuid())
+    profile['gid'] = profile.get('gid', os.getgid())
+    profile['use_docker'] = profile.get('use_docker', 0)
+    profile['install_dir'] = os.path.abspath(os.path.realpath(__file__) + os.path.sep + '..')
+    profile['config_file'] = os.path.abspath(os.path.join(profile['data_dir'], 'config'))
+    profile['timestamp_file'] = os.path.abspath(os.path.join(profile['data_dir'], 'expiration-timestamp'))
+
+    os.makedirs(profile['data_dir'], mode=0o700, exist_ok=True)
+    try:
+        os.chown(profile['data_dir'], profile['uid'], profile['gid'])
+    except PermissionError:
+        print('Failed to chown data directory, continuing anyways...')
+
+    os.environ['DEVICE_NAME'] = profileName
+    os.environ['INSTALL_DIR'] = profile['install_dir']
+    os.environ['DATA_DIR'] = profile['data_dir']
+    os.environ['TMATE_SOCK'] = os.path.abspath(os.path.join(profile['data_dir'], 'tmate.sock'))
+    os.environ['CONFIG_FILE'] = profile['config_file']
+    os.environ['EXPIRATION_TIMESTAMP'] = profile['timestamp_file']
+    os.environ['USE_DOCKER'] = str(profile['use_docker'])
+
+    return profile
 
 
-c.connect('https://localhost:5000', headers=auth_hdr)
-c.wait()
-sys.exit(error)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("profile", help="profile to use")
+    args = parser.parse_args()
+
+    profile = get_profile(args.profile)
+    if profile is None:
+        return 1
+
+    #TODO change to wss
+    client = Client("ws://localhost:8080/device", 5)
