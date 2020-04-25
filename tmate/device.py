@@ -166,4 +166,4 @@ if __name__ == "__main__":
         exit(1)
 
     #TODO change to wss
-    client = Client("ws://localhost:8080/device", 5)
+    client = Client("ws://localhost:8080/device", profile)
