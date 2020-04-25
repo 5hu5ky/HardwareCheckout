@@ -47,11 +47,11 @@ class Client(object):
 
     @gen.coroutine
     def run(self):
-        if not self.is_provisioned:
-            if not self.provision():
-                self.ws.write_message(json_encode({'status':'provision-failed'}))
-                return
-            self.ws.write_message(json_encode({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro}))
+        # if not self.is_provisioned:
+        #     if not self.provision():
+        #         self.ws.write_message(json_encode({'status':'provision-failed'}))
+        #         return
+        #     self.ws.write_message(json_encode({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro}))
         while True:
             msg = yield self.ws.read_message()
             if msg is None:

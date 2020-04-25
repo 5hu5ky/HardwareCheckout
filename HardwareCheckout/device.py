@@ -49,6 +49,10 @@ class DeviceStateHandler(DeviceWSHandler):
         if self.__class__.__timer is None:
             self.__class__.__timer = Timer(self.__class__.__callback, True)
             self.__class__.__timer.start()
+        with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=self.device).one()
+            device.state = 'want-provision'
+        self.send_device_state('want-provision')
 
     def on_message(self, message):
         parsed = json_decode(message)
