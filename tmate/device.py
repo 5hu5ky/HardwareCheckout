@@ -8,7 +8,7 @@ from base64 import b64encode
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado import gen
 from tornado.websocket import websocket_connect
-from tornado.escape import json_decode
+from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
 
 
@@ -48,7 +48,10 @@ class Client(object):
     @gen.coroutine
     def run(self):
         if not self.is_provisioned:
-            self.provision()
+            if not self.provision():
+                self.ws.write_message(json_encode({'status':'provision-failed'}))
+                return
+            self.ws.write_message(json_encode({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro}))
         while True:
             msg = yield self.ws.read_message()
             if msg is None:
@@ -65,7 +68,7 @@ class Client(object):
         if self.ws is None:
             self.connect()
         else:
-            self.ws.write_message({"status":"keep-alive"})
+            self.ws.write_message(json_encode({"status":"keep-alive"}))
 
     def handle_message(self, message):
         #TODO make async
@@ -77,16 +80,16 @@ class Client(object):
             if not self.is_provisioned:
                 if not self.provision():
                     print("Error: provision.sh returned {}".format(returnCode))
-                    self.ws.write_message({'status':'provision-failed'})
+                    self.ws.write_message(json_encode({'status':'provision-failed'}))
                     return
-            self.ws.write_message({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro})
+            self.ws.write_message(json_encode({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro}))
         elif state == 'want-deprovision':
             if self.is_provisioned:
                 if not self.deprovision():
                     print("Error: deprovision.sh returned {}".format(returnCode))
-                    self.ws.write_message({'status':'deprovision-failed'})
+                    self.ws.write_message(json_encode({'status':'deprovision-failed'}))
                     return
-            self.ws.write_message({'status':'is-deprovisioned'})
+            self.ws.write_message(json_encode({'status':'is-deprovisioned'}))
         elif state == 'update-expiration':
             with open(self.profile['timestamp_file'], 'w') as fout:
                 fout.write(str(int(data['expiration'])))
