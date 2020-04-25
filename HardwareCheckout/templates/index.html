@@ -8,11 +8,11 @@
 
 {% block content %}
     <div class="container">
-        <div id="devices" class="content" style="display: {{ 'block' if devices else 'none' }}">
+        <div id="devices" class="content">
             <h6>Devices available:</h6>
             <ul>
                 {% for device in devices %}
-                <li id="{{ device['name'] }}">
+                <li id="device_{{ device['name'] }}">
                     {{ device['name'] }}
                     <ul>
                         <li>SSH: {{ device['sshAddr'] }}</li>
@@ -23,15 +23,17 @@
             </ul>
         </div>
 
+        <hr>
+
         <div class="content">
-            <h6>Devices</h6>
+            <h6>Join device queue</h6>
             <div style="display: flex">
                 {% for queue in queues %}
                 <div style="border: 1px solid black; width: 300px; float: left">
                     <form action="/queue/{{ queue['id'] }}" method="POST">
                     {{ queue['name'] }}
                     <br>
-                    {{ queue['size'] }} in queue.
+                    <span id="qs_{{ queue['id'] }}">{{ queue['size'] }}</span> in queue.
                     <input type="submit" value="Join Queue">
                     </form>
                 </div>
