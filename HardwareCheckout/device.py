@@ -82,11 +82,13 @@ class DeviceStateHandler(DeviceWSHandler):
             if state in ('provision-failed', 'deprovision-failed'):
                 device.state = state
 
+            oldState = device.state
+            deviceID = device.id
             # write to the db
             session.add(device)
 
         # if we are in a failure state
-        if device.state in ('provision-failed', 'deprovision-failed', 'keep-alive'):
+        if oldState in ('provision-failed', 'deprovision-failed', 'keep-alive'):
             return 
 
         # if the new status is invalid
@@ -94,16 +96,16 @@ class DeviceStateHandler(DeviceWSHandler):
             return
         
         # if the new status is provisioned and we are correctly in want provision
-        if state == 'is-provisioned' and device.state == 'want-provision':
-            self.device_ready(device)
+        if state == 'is-provisioned' and oldState == 'want-provision':
+            self.device_ready(deviceID)
         # if new status is deprovisioned and previous state is want deprovision
-        elif state == 'is-deprovisioned' and device.state == 'want-deprovision':
-            self.provision_device(device)
+        elif state == 'is-deprovisioned' and oldState == 'want-deprovision':
+            self.provision_device(deviceID)
             self.send_device_state('want-provision')
         # if new status is client connected and we were in queue
-        elif state == 'client-connected' and device.state == 'in-queue':
-            self.device_in_use(device)
-        elif device.state in ('disabled', 'want-deprovision'):
+        elif state == 'client-connected' and oldState == 'in-queue':
+            self.device_in_use(deviceID)
+        elif oldState in ('disabled', 'want-deprovision'):
             if state != 'is-deprovisioned':
                 self.send_device_state('want-deprovision')
             else:
@@ -117,53 +119,58 @@ class DeviceStateHandler(DeviceWSHandler):
         return self.write_message(kwargs)
 
     @staticmethod
-    def deprovision_device(device):
+    def deprovision_device(deviceID):
         with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
             device.state = 'want-deprovision'
             device.expiration = None
             session.add(device)
 
     @staticmethod
-    def provision_device(device):
+    def provision_device(deviceID):
         with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
             device.state = 'want-provision'
             device.expiration = None
             session.add(device)
 
     @staticmethod
-    def device_ready(device):
+    def device_ready(deviceID):
         with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
             device.state = 'ready'
             device.expiration = None
             device.owner = None
             session.add(device)
-        DeviceStateHandler.check_for_new_user()
+            deviceType = device.type
+        DeviceStateHandler.check_for_new_owner(deviceID,deviceType)
 
     @staticmethod
-    def check_for_new_owner(device):
+    def check_for_new_owner(deviceID, deviceType):
         with make_session() as session:
             next_user = session.query(UserQueue).filter_by(type=device.type).order_by(UserQueue.id).first()
             if next_user:
                 session.delete(next_user)
-                return DeviceStateHandler.device_in_queue(device, next_user)
+                return DeviceStateHandler.device_in_queue(deviceID, next_user)
 
     @staticmethod
-    def device_in_queue(device, next_user):
+    def device_in_queue(deviceID, next_user):
         with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
             device.state = 'in-queue'
-            device.owner = next_user.id
+            device.owner = next_user
             session.add(device)
 
-        timer = Timer(DeviceStateHandler.return_device, repeat=False, timeout=1800, args=[device.id])
+        timer = Timer(DeviceStateHandler.return_device, repeat=False, timeout=1800, args=[deviceID])
         timer.start()
         try:
-            DeviceStateHandler.push_timer(device.id, timer)
+            DeviceStateHandler.push_timer(deviceID, timer)
         except KeyError:
-            old_timer = DeviceStateHandler.pop_timer(device.id)
+            old_timer = DeviceStateHandler.pop_timer(deviceID)
             old_timer.stop()
             del old_timer
-            DeviceStateHandler.push_timer(device.id, timer)
-        QueueWSHandler.send_device_info_to_user(next_user.id, device.id)
+            DeviceStateHandler.push_timer(deviceID, timer)
+        QueueWSHandler.send_device_info_to_user(next_user, deviceID)
             
 
     @staticmethod
@@ -174,21 +181,21 @@ class DeviceStateHandler(DeviceWSHandler):
         DeviceStateHandler.send_message_to_owner(device, 'device_lost')
 
     @staticmethod
-    def device_in_use(device):
-        device.state = 'in-use'
+    def device_in_use(deviceID):
         with make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=deviceID).first()[0]
+            device.state = 'in-use'
             session.add(device)
-            session.commit()
         
-        timer = Timer(DeviceStateHandler.reclaim_device, repeat=False, timeout=1800, args=[device.id])
+        timer = Timer(DeviceStateHandler.reclaim_device, repeat=False, timeout=1800, args=[deviceID])
         timer.start()
         try:
-            DeviceStateHandler.push_timer(device.id, timer)
+            DeviceStateHandler.push_timer(deviceID, timer)
         except KeyError:
-            old_timer = DeviceStateHandler.pop_timer(device.id)
+            old_timer = DeviceStateHandler.pop_timer(deviceID)
             old_timer.stop()
             del old_timer
-            DeviceStateHandler.push_timer(device.id, timer)
+            DeviceStateHandler.push_timer(deviceID, timer)
             
 
     @staticmethod
@@ -199,10 +206,10 @@ class DeviceStateHandler(DeviceWSHandler):
             DeviceStateHandler.deprovision_device(device)
 
     @staticmethod
-    def send_message_to_owner(device, message):
+    def send_message_to_owner(deviceID, message):
         with make_session() as session:
-            name = session.query(DeviceType.name).filter_by(id=device.type).one()
-        QueueWSHandler.notify_user(device.owner, error=message, device=name)
+            owner, name = session.query(DeviceQueue.owner, DeviceQueue.name).filter_by(id=deviceID).one()
+        QueueWSHandler.notify_user(owner, error=message, device=name)
 
     @classmethod
     def push_timer(cls, deviceID, timer):
@@ -217,9 +224,9 @@ class DeviceStateHandler(DeviceWSHandler):
     @staticmethod
     def __callback():
         with make_session() as session:
-            for device in session.query(DeviceQueue).all():
+            for deviceID, deviceType in session.query(DeviceQueue.id, DeviceQueue.type).all():
                 if device.state == 'ready':
-                    DeviceStateHandler.check_for_new_owner(device)
+                    DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
                 # elif device.state == "in-queue":
                 #     DeviceStateHandler.device_in_queue(device, session)
                 # elif device.state == "in-use":
