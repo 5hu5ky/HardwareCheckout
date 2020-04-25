@@ -70,19 +70,20 @@ class DeviceStateHandler(DeviceWSHandler):
 
     def device_put(self, state, ssh=None, web=None, web_ro=None):
         # always update the urls if available
-        if ssh:
-            self.device.sshAddr = ssh
-        if web:
-            self.device.webUrl = web
-        if web_ro:
-            self.device.roUrl = web_ro
-
-        # if we are transitioning to a failure state
-        if state in ('provision-failed', 'deprovision-failed'):
-            device.state = state
-
-        # write to the db
         with self.make_session() as session:
+            device = session.query(DeviceQueue).filter_by(id=self.device).first()
+            if ssh:
+                device.sshAddr = ssh
+            if web:
+                device.webUrl = web
+            if web_ro:
+                device.roUrl = web_ro
+
+            # if we are transitioning to a failure state
+            if state in ('provision-failed', 'deprovision-failed'):
+                device.state = state
+
+            # write to the db
             session.add(device)
 
         # if we are in a failure state

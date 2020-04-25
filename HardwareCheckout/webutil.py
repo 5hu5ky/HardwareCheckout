@@ -54,10 +54,10 @@ class DeviceWSHandler(SessionMixin, WebSocketHandler):
         name, password = b64decode(self.request.headers['Authorization'][6:]).decode().split(':', 1)
         try:
             with self.make_session() as session:
-                device = session.query(DeviceQueue).filter_by(name=name).one()
-            if not check_password_hash(device.password, password):
+                deviceID, devicePassword = session.query(DeviceQueue.id, DeviceQueue.password).filter_by(name=name).one()
+            if not check_password_hash(devicePassword, password):
                 return False
-            return device
+            return deviceID
         except NoResultFound:
             return False
 
