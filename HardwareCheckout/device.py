@@ -29,7 +29,6 @@ from tornado.escape import json_decode
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import check_password_hash
 
-from . import timer
 from .models import DeviceQueue, DeviceType, UserQueue
 from .webutil import Blueprint, DeviceWSHandler, Timer, make_session
 from .queue import QueueWSHandler
