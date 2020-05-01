@@ -1,22 +1,41 @@
-from flask import Blueprint, render_template
-from flask import current_app as app
+from .models import DeviceQueue, DeviceType
+from .webutil import Blueprint, noself, UserBaseHandler
+from tornado_sqlalchemy import as_future
 
-from . import db, create_app
-from .models import DeviceQueue, User
-
-main = Blueprint('main', __name__)
+main = Blueprint()
 
 
-@main.route('/')
-def index():
-    """
-    Home path for the site
+@main.route('/', name="main")
+class MainHandler(UserBaseHandler):
+    async def get(self):
+        """
+        Home path for the site
 
-    :return:
-    """
-    results = db.session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).all()
-    return render_template('index.html', terminals=results)
+        :return:
+        """
+        with self.make_session() as session:
+            if self.current_user and self.current_user.has_roles('Admin'):
+                terminals = await as_future(DeviceQueue.get_all_web_urls_async(session))
+                show_streams = False
+            else:
+                terminals = await DeviceQueue.get_all_ro_urls_async(session)
+                show_streams = True
+            if self.current_user:
+                devices = await self.current_user.get_owned_devices_async(session)
+                devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
+            else:
+                devices = []
 
+            # TODO figure out why this one refuses to async
+            tqueues = await DeviceType.get_queues_async(session)
+            queues = []
+            for i in tqueues:
+                queues.append({
+                    "id": i[0],
+                    "name": i[1],
+                    "size": i[2],
+                })
+            # session.flush()
 
-if __name__ == '__main__':
-    create_app()
+        # TODO: limit the number of vars passed to the template
+        self.render('index.html', **noself(locals()))

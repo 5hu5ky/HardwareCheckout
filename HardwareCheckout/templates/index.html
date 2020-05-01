@@ -1,35 +1,70 @@
 {% extends "base.html" %}
 
 {% block head %}
-<link rel= "stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/term.css') }}">
+<link rel= "stylesheet" type= "text/css" href="{{ static_url('styles/term.css') }}">
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
-<script src="{{ url_for('static',filename='js/term.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
-{% endblock %}
+<script src="{{ static_url('js/term.js') }}"></script>
+{% end %}
 
 {% block content %}
     <div class="container">
+        <div id="devices" class="content">
+            <h6>Devices available:</h6>
+            <ul>
+                {% for device in devices %}
+                <li id="device_{{ device['name'] }}">
+                    {{ device['name'] }}
+                    <ul>
+                        <li>SSH: {{ device['sshAddr'] }}</li>
+                        <li>Web: <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></li>
+                    </ul>
+                </li>
+                {% end %}
+            </ul>
+        </div>
+
+        <hr>
+
+        <div class="content">
+            <h6>Join device queue</h6>
+            <div style="display: flex">
+                {% for queue in queues %}
+                <div style="border: 1px solid black; width: 300px; float: left">
+                    <form action="/queue/{{ queue['id'] }}" method="POST">
+                    {{ queue['name'] }}
+                    <br>
+                    <span id="qs_{{ queue['id'] }}">{{ queue['size'] }}</span> in queue.
+                    <input type="submit" value="Join Queue">
+                    </form>
+                </div>
+                {% end %}
+            </div>
+        </div>
+
+        {% if show_streams %}
         <div class="columns">
             <div id="stream-1" class="column"></div>
             <div id="stream-2" class="column"></div>
             <div id="stream-3" class="column"></div>
         </div>
+        {% end %}
 
         <div class="tab">
             {% for term in terminals %}
             <button class="tablinks" onclick="openTab(event, '{{term[0]}}')">{{term[0]}}</button>
-            {% endfor %}
+            {% end %}
         </div>
 
         {% for term in terminals %}
         <div id="{{term[0]}}" class="tabcontent">
             <iframe  id="{{ term[0] }}-frame" src="{{term[1]}}" style="height:100%;width:100%;"></iframe>
         </div>
-        {% endfor %}
+        {% end %}
     </div>
-{% endblock %}
+{% end %}
 
 {% block scripts %}
+<script src="{{ static_url('js/queue.js') }}"></script>
 <script type="text/javascript">
     let player1 = new Twitch.Player("stream-1", {
         width: 400,
@@ -47,20 +82,5 @@
         channel: "carhackingvillage3"
     });
 
-    let socket = io();
-    socket.on("json", function(msg) {
-        if (msg.message == "device_available") {
-            notify("Your device is ready");
-        }
-    });
-
-    function notify(msg) {
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(msg);
-        } else {
-            alert(msg);
-        }
-    }
-
 </script>
-{% endblock %}
+{% end %}

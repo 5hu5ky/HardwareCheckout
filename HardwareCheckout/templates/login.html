@@ -4,13 +4,12 @@
 <div class="column is-4 is-offset-4">
     <h3 class="title">Login</h3>
     <div class="box">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="notification is-danger">
-                    {{ messages[0] }}
-                </div>
-            {% endif %}
-        {% endwith %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages }}
+            </div>
+        {% end %}
+
         <form method="POST" action="/login">
             <div class="field">
                 <div class="control">
@@ -33,4 +32,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
+{% end %}
