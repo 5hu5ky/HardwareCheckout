@@ -46,12 +46,17 @@ class MainHandler(UserBaseHandler):
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "size": i[2]} for i in tqueues]
 
-        # TODO: limit the number of vars passed to the template
-        self.render('index.html', **noself(locals()))
+        self.render('index.html', devices=devices, queues=queues, show_streams=show_streams, terminals=terminals)
 
     @classmethod
     async def updateQueues(cls):
         with make_session() as session:
-            cls.RWTerminals = await as_future(DeviceQueue.get_all_web_urls_async(session))
-            cls.ROTerminals = await DeviceQueue.get_all_ro_urls_async(session)
-            cls.queues = await DeviceType.get_queues_async(session)
+            # Start all the queries
+            future_WebUrls = DeviceQueue.get_all_web_urls_async(session)
+            future_WebUrlsRO = DeviceQueue.get_all_ro_urls_async(session)
+            future_Queues = DeviceType.get_queues_async(session)
+
+            # Wait for the results
+            cls.RWTerminals = await future_WebUrls
+            cls.ROTerminals = await future_WebUrlsRO
+            cls.queues      = await future_Queues
