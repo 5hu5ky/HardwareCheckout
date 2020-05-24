@@ -18,33 +18,33 @@ class MainHandler(UserBaseHandler):
 
         :return:
         """
+        # default values
+        terminals = self.ROTerminals
+        show_streams = True
+        devices = []
+        queues = []
+
         # If no background queue update thread as started, start it
         if self.timer is None:
             self.timer = Timer(self.updateQueues, timeout=5, args=(self.__class__,))
 
-        # find out what kind of terminals this user is allowed to look at
-        if self.current_user and self.current_user.has_roles('Admin'):
-            terminals = self.RWTerminals
-            show_streams = False
-        else:
-            terminals = self.ROTerminals
-            show_streams = True
-
         # check if use is logged in
         if self.current_user:
-            # Get any devices the user may own.
-            with self.make_session() as session:
-                devices = await self.current_user.get_owned_devices_async(session)
-            devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
+            #check if the user is an admin
+            if self.current_user.has_roles('Admin'):
+                terminals = self.RWTerminals
+                show_streams = False
+                devices = []
+            else:
+                # Get any devices the user may own.
+                with self.make_session() as session:
+                    devices = await self.current_user.get_owned_devices_async(session)
+                devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
 
             # get a listing of all the queues available
             # Make a copy of the list because we are iterating through it
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "size": i[2]} for i in tqueues]
-        else:
-            devices = []
-            queues = []
-
 
         # TODO: limit the number of vars passed to the template
         self.render('index.html', **noself(locals()))
