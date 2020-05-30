@@ -12,30 +12,36 @@ auth = Blueprint()
 
 @auth.route("/login", name="login")
 class LoginHandler(UserBaseHandler):
-    def post(self):
+    async def post(self):
         """
         Path that handles the actual logging in of users. All super basic at this point.
 
         :return:
         """
+        # Try and get the parameters we care about, exception is thrown if non existent
         try:
             name = self.get_argument("name")
             password = self.get_argument("password")
-            # remember = True if request.form.get("remember") else False
         except MissingArgumentError:
-            # self.write_error(400)
             return self.render("login.html", messages="Missing username or password")
 
-        if name is None or password is None:
-            # self.write_error(400)
+        # Make sure that they are actual values and not just empty.
+        if not name or not password:
             return self.render("login.html", messages="Invalid username or password")
 
-        user = self.session.query(User).filter_by(name=name).first()
-
-        if not user or not check_password_hash(user.password, password):
+        # Do a user lookup for the provided username
+        try:
+            with self.make_session() as session:
+                userId, userPass = await as_future(session.query(User.id, User.password).filter_by(name=name).first)
+        except Exception:
             return self.render("login.html", messages="Invalid username or password")
 
-        self.set_secure_cookie("user", str(user.id))
+        # Check if they provided the right password
+        if not userPass or not check_password_hash(userPass, password):
+            return self.render("login.html", messages="Invalid username or password")
+
+        # Successful login, they deserve a cookie
+        self.set_secure_cookie("user", str(userId))
         return self.redirect(self.reverse_url("main"))
 
     def get(self):
@@ -55,12 +61,13 @@ class SignUpHandler(UserBaseHandler):
         """
         return self.render("signup.html", messages=None)
 
-    def post(self):
+    async def post(self):
         """
         Super basic signup handler
 
         :return:
         """
+        # Try and get the parameters we care about, exception is thrown if non existent
         try:
             name = self.get_argument("name")
             password = self.get_argument("password")
@@ -68,19 +75,24 @@ class SignUpHandler(UserBaseHandler):
             return self.render("signup.html", messages="Missing username or password")
 
         with self.make_session() as session:
-            user = session.query(User).filter_by(name=name).first()
+            # Check and see if that username already exists
+            user = await as_future(session.query(User).filter_by(name=name).first)
 
             if user:
                 return self.render("signup.html", messages="User name already exists")
 
+            # Get a copy of the human role
+            roles = await as_future(session.query(Role).filter_by(name="Human").first)
+
+            # Create the new user entry
             new_user = User(
                 name=name,
                 password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
-                roles=[session.query(Role).filter_by(name="Human").first()],
+                roles=[roles],
             )
 
+            # add it to the db
             session.add(new_user)
-            session.commit()
 
         return self.redirect(self.reverse_url("login"))
 
