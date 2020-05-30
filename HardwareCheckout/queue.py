@@ -88,6 +88,7 @@ class SingleQueueHandler(UserBaseHandler):
             id = int(id)
         except ValueError:
             self.render("error.html", error="Invalid Queue")
+            return
 
         with self.make_session() as session:
             names = await as_future(session.query(User.name).select_from(UserQueue).join(User).filter(UserQueue.type == id).order_by(UserQueue.id).all)
@@ -100,6 +101,7 @@ class SingleQueueHandler(UserBaseHandler):
             id = int(id)
         except ValueError:
             self.render("error.html", error="Invalid Queue")
+            return
 
         with self.make_session() as session:
             # Check if the user is already registered for a queue
