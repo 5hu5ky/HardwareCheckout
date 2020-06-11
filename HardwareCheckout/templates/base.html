@@ -7,11 +7,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Car Hacking Village</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&family=Orbitron:wght@800&display=swap" rel="stylesheet">
+    <link rel= "stylesheet" type= "text/css" href="{{ static_url('styles/term.css') }}">
+
     {% block head %}{% end %}
 </head>
 
 <body>
-<section class="hero is-primary is-fullheight">
+<section class="hero is-fullheight">
 
     <div class="hero-head">
         <nav class="navbar">
@@ -49,9 +52,9 @@
         </nav>
     </div>
 
-    <div class="image has-image-centered">
-        <img src="https://images.squarespace-cdn.com/content/5a60c2ed017db2e8dedb82b7/1522176665220-BPB99RF7S1A7FVSYEJOZ/Screen+Shot+2018-03-27+at+12.49.42+PM.png?content-type=image%2Fpng"
-             style="width: 10em;">
+    <div class="flex-center">
+        <img src="{{ static_url('styles/CHVlogo.png') }}"
+             style="width: 35%;">
     </div>
 
     <div class="hero-body">
