@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
-<link rel= "stylesheet" type= "text/css" href="{{ static_url('styles/term.css') }}">
+
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="{{ static_url('js/term.js') }}"></script>
 {% end %}
@@ -9,40 +9,56 @@
 {% block content %}
     <div class="container">
         <div id="devices" class="content">
-            <h6>Devices available:</h6>
-            <ul>
+            <div class="section-header">Devices available</div>
+            <div class="available-devices--row">
                 {% for device in devices %}
-                <li id="device_{{ device['name'] }}">
-                    {{ device['name'] }}
-                    <ul>
-                        <li>SSH: {{ device['sshAddr'] }}</li>
-                        <li>Web: <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></li>
-                    </ul>
-                </li>
-                {% end %}
-            </ul>
-        </div>
-
-        <hr>
-
-        <div class="content">
-            <h6>Join device queue</h6>
-            <div style="display: flex">
-                {% for queue in queues %}
-                <div style="border: 1px solid black; width: 300px; float: left">
-                    <form action="/queue/{{ queue['id'] }}" method="POST">
-                    {{ queue['name'] }}
-                    <br>
-                    <span id="qs_{{ queue['id'] }}">{{ queue['size'] }}</span> in queue.
-                    <input type="submit" value="Join Queue">
-                    </form>
+                <div class="available-device" id="device_{{ device['name'] }}">
+                    <div class="available-device-header">
+                      <div class="available-device-header--corner"></div>
+                      <div class="available-device-header--name">Device 1</div>
+                    </div>
+                    <div class="available-device-content">
+                        <div>
+                          <div>Your device is ready!  Connect to it using:</div>
+                          <div class="tab-space">$ssh user@{{ device['sshAddr'] }}</div>
+                          <br>
+                          <div>Or visit it at <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></div>
+                        </div>
+                        <div>Check out the tutorial <a href="https://www.carhackingvillage.com/getting-started">here</a>.</div>
+                    </div>
                 </div>
+                    <!-- <div class="not-found">No devices found</div>  -->
+                {% end %}
+            </div>
+        </div>
+        <div class="breaker-line"></div>
+        <div class="content">
+            <div class="section-header">Join device queue</div>
+            <div class="device-queue--row">
+                {% for queue in queues %}
+                <div class="device-queue">
+                    <div class="queue-header">
+                      <div class="queue-header--corner"></div>
+                      <div class="queue-header--name">{{ queue['name'] }}</div>
+                    </div>
+                    <div class="queue-content">
+                      <form action="/queue/{{ queue['id'] }}" method="POST">
+                          <div class="queue-text">
+                            <span id="qs_{{ queue['id'] }}">{{ queue['size'] }}</span> currently in queue.
+                          </div>
+                          <input type="submit" value="Join Queue">
+                        </form>
+                    </div>
+                </div>
+	        <!-- <div class="not-found">No queues found.</div> --> 
                 {% end %}
             </div>
         </div>
 
+        <div class="breaker-line"></div>
+
         {% if show_streams %}
-        <div class="columns">
+        <div class="columns twitch-streams">
             <div id="stream-1" class="column"></div>
             <div id="stream-2" class="column"></div>
             <div id="stream-3" class="column"></div>
