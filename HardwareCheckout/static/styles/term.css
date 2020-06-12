@@ -18,6 +18,10 @@ section {
   overflow: hidden;
 }
 
+.hero-body {
+  padding-top: 2em !important;
+}
+
 section:before {
   content: ' ';
   display: block;
@@ -74,6 +78,29 @@ a:hover {
   background: rgba(117, 40, 187, 0.2);
   display: inline-block;
   padding: 4px 20px;
+}
+
+@media only screen and (max-device-width: 480px) {
+  .section-header {
+    letter-spacing: 1px;
+    font-size: 22px;
+  }
+}
+
+.logo-image {
+  max-width: 20%;
+  min-width: 20%;
+  height: auto;
+  min-height: auto;
+}
+
+@media only screen and (max-device-width: 480px) {
+  .logo-image {
+    max-width: 60%;
+    min-width: 60%;
+    height: auto;
+    min-height: auto;
+  }
 }
 
 .flex-center {
@@ -178,6 +205,18 @@ a:hover {
   opacity: 0.5;
 }
 
+.navbar-burger {
+  color: #bcf225;
+}
+
+@media screen and (max-width: 1087px) {
+  .navbar-menu {
+    background-color: #10041e;
+    margin-left: 16px;
+  }
+}
+
+
 /* Devices */
 .available-devices--row {
   display: flex;
@@ -186,7 +225,7 @@ a:hover {
 
 .available-device {
   background-image: radial-gradient(
-    rgba(188,242,37, 0.15), black 90%
+    rgba(188,242,37, 0.2), black 90%
   );
   margin: 16px;
   border-width: 1px;
@@ -230,6 +269,18 @@ a:hover {
     justify-content: space-between;
 }
 
+@media only screen and (max-device-width: 480px) {
+  .available-device {
+    max-width: 90%;
+    margin: 16px 0px;
+  }
+
+  .available-device-content {
+      padding: 16px;
+      min-width: unset;
+  }
+}
+
 .available-device-content form {
     display: flex;
     flex-direction: column;
@@ -248,6 +299,17 @@ a:hover {
 .twitch-streams {
   display: flex;
   justify-content: center;
+}
+
+/* tablet and mobile */
+@media only screen and (max-device-width: 1024px) {
+  .twitch-streams {
+    display: block;
+  }
+
+  .twitch-streams iframe {
+    width: 100% !important;
+  }
 }
 
 /* Login and Signup */
@@ -334,5 +396,5 @@ a:hover {
 .notification-banner {
   border-radius: 0px;
   background-color: #bcf225;
-  color: black;
 }
+
