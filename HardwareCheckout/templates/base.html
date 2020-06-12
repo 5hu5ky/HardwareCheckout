@@ -19,7 +19,13 @@
     <div class="hero-head">
         <nav class="navbar">
             <div class="container">
-
+                <div class="navbar-brand">
+                    <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarMenuHeroA">
+                      <span aria-hidden="true"></span>
+                      <span aria-hidden="true"></span>
+                      <span aria-hidden="true"></span>
+                    </a>
+                </div>
                 <div id="navbarMenuHeroA" class="navbar-menu">
                     <div class="navbar-end">
                         <a href="{{ reverse_url('main') }}" class="navbar-item">
@@ -54,7 +60,7 @@
 
     <div class="flex-center">
         <img src="{{ static_url('styles/CHVlogo.png') }}"
-             style="width: 35%;">
+             class="logo-image">
     </div>
 
     <div class="hero-body">
