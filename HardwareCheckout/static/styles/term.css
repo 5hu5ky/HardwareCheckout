@@ -96,8 +96,8 @@ a:hover {
 
 @media only screen and (max-device-width: 480px) {
   .logo-image {
-    max-width: 60%;
-    min-width: 60%;
+    max-width: 70%;
+    min-width: 70%;
     height: auto;
     min-height: auto;
   }
@@ -197,6 +197,20 @@ a:hover {
   background-color: transparent;
   color: #b2a6ce;
   text-shadow: #9281b9 0px 0px 10px;
+}
+
+.navbar-item img {
+  max-height: none;
+  width: 90px;
+  max-width: 90px;
+  height: auto;
+}
+
+@media screen and (max-width: 480px) {
+  .navbar-item img {
+    width: 75px;
+    max-width: 75px;
+  }
 }
 
 .breaker-line {
@@ -301,7 +315,7 @@ a:hover {
   justify-content: center;
 }
 
-/* tablet and mobile */
+/* table and mobile */
 @media only screen and (max-device-width: 1024px) {
   .twitch-streams {
     display: block;
