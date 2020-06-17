@@ -3,14 +3,18 @@ A simple website which will facilitate physical hardware checkout
 
 # Server
 
-## Dev setup
-- Optional - set up virtual env
-    ```
-    python3 -m virtualenv venv
-    source venv/bin/activate
-    ```
-- `pip3 -r requirements.txt`
-- `./run.sh`
+Initial server set-up is done via install.sh - run that first... It does almost everything for you, but cook. Run it as root.
+
+The application is installed as a service and can be interacted like this:
+
+```
+service HardwareCheckout start
+service HardwareCheckout stop
+```
+
+The service runs in its own virtual environment...
+
+# Operating Server Functions [High-Level]
 
 ## Add admin
 - `./addAdmin.py <username> <password>`
