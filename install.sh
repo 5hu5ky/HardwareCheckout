@@ -12,10 +12,11 @@ DBPASS=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | hea
 
 echo "Run this once and you should be set... Make sure to run it as root!"
 
+f
 if [ ! -d "$APP_PATH" ]; then
 
   while true; do
-    read -p "$APP_PATH does not exist - do you want me to clone the repo? (Y|N)?" yn
+    read -p "$APP_PATH does not exist - do you want me to clone the repo? (y/N)?" yn
     case $yn in
         [Yy]* ) sudo git clone $GITREPO $APP_PATH; break;;
         [Nn]* ) exit;;
@@ -27,7 +28,7 @@ fi
 
 echo "Installing required system packages...(if needed)"
 
-if dpkg -l | grep python4-pip 2>&1 > /dev/null; then
+if sudo dpkg -l | sudo grep python3-pip 2>&1 > /dev/null; then
 	echo "pip3 exists..."
 else
 	echo "pip3 does not exist"
@@ -35,7 +36,7 @@ else
 	sudo apt-get -qq -y install python3-pip
 fi
 
-if dpkg -l | grep postgresql 2>&1 > /dev/null; then
+if sudo dpkg -l | sudo grep postgresql 2>&1 > /dev/null; then
 	echo "postpgres exists..."
 else
 	echo "postgres does not exist"
@@ -52,7 +53,7 @@ if psql -lqt | cut -d \| -f 1 | grep -qw $DBNAME; then
     # $? is 0
     echo "$DBNAME exists.. Leaving it as it is... If you want a fresh DB drop it manually and try again..."
     while true; do
-    read -p "Do you want me to continue? (Y|N)?" yn
+    read -p "Do you want me to continue? (y/N)?" yn
     case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit;;
@@ -74,18 +75,18 @@ fi
 
 echo "Installing required application packages...(if needed)"
 
-sudo yes | pip3 install virtualenv
+sudo yes | sudo pip3 install virtualenv
 
 cd $APP_PATH
 if [ ! -d "$APP_PATH/venv" ]; then
-  python3 -m virtualenv venv
+  sudo python3 -m virtualenv venv
 fi
 
-source venv/bin/activate
-sudo yes | pip3 install -r requirements.txt
+sudo source venv/bin/activate
+sudo yes | sudo pip3 install -r requirements.txt
 
 #Configure Application
-cat << EOF > $APP_PATH/HardwareCheckout/config.py
+sudo cat << EOF > $APP_PATH/HardwareCheckout/config.py
 #!/usr/bin/env python3
 db_path = 'postgresql+psycopg2://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME'
 EOF
