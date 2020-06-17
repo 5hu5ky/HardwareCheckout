@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#@author: dtechshield 
+
 #This assumes all is installed under /opt/HardwareCheckout
 
 GITREPO=https://github.com/linted/HardwareCheckout.git
