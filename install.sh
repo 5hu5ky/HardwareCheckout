@@ -12,7 +12,7 @@ DBPASS=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | hea
 
 echo "Run this once and you should be set... Make sure to run it as root!"
 
-f
+
 if [ ! -d "$APP_PATH" ]; then
 
   while true; do
@@ -75,7 +75,7 @@ fi
 
 echo "Installing required application packages...(if needed)"
 
-sudo yes | sudo pip3 install virtualenv
+yes | pip3 install virtualenv
 
 cd $APP_PATH
 if [ ! -d "$APP_PATH/venv" ]; then
@@ -83,7 +83,7 @@ if [ ! -d "$APP_PATH/venv" ]; then
 fi
 
 sudo source venv/bin/activate
-sudo yes | sudo pip3 install -r requirements.txt
+yes | pip3 install -r requirements.txt
 
 #Configure Application
 sudo cat << EOF > $APP_PATH/HardwareCheckout/config.py
