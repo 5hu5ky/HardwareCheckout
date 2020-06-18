@@ -27,7 +27,7 @@ class MainHandler(UserBaseHandler):
         # If no background queue update thread as started, start it
         if self.timer is None:
             print("Scheduling")
-            self.timer = Timer(self.updateQueues, timeout=5)
+            self.__class__.timer = Timer(self.updateQueues, timeout=5)
 
         # check if use is logged in
         if self.current_user:
