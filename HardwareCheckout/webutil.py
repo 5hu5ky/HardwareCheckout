@@ -1,13 +1,14 @@
 from base64 import b64decode
 from functools import partial
 from contextlib import contextmanager
+from asyncio import iscoroutine
 
 from sqlalchemy.orm.exc import NoResultFound
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.locks import Condition
 from tornado.web import RequestHandler, URLSpec
 from tornado.websocket import WebSocketHandler
-from tornado_sqlalchemy import SessionMixin
+from tornado_sqlalchemy import SessionMixin, as_future
 from werkzeug.security import check_password_hash
 
 from .models import DeviceQueue, User, db
@@ -46,7 +47,7 @@ class DeviceBaseHandler(SessionMixin, RequestHandler):
 
 
 class DeviceWSHandler(SessionMixin, WebSocketHandler):
-    def check_authentication(self):
+    async def check_authentication(self):
         if 'Authorization' not in self.request.headers:
             return False
         if not self.request.headers['Authorization'].startswith('Basic '):
@@ -54,7 +55,7 @@ class DeviceWSHandler(SessionMixin, WebSocketHandler):
         name, password = b64decode(self.request.headers['Authorization'][6:]).decode().split(':', 1)
         try:
             with self.make_session() as session:
-                deviceID, devicePassword = session.query(DeviceQueue.id, DeviceQueue.password).filter_by(name=name).one()
+                deviceID, devicePassword = await as_future(session.query(DeviceQueue.id, DeviceQueue.password).filter_by(name=name).one)
             if not check_password_hash(devicePassword, password):
                 return False
             return deviceID
@@ -101,6 +102,7 @@ class Waiters:
             self.waiters[id] = WaiterBucket()
         return self.waiters[id]
 
+    # TODO can this be async?
     def broadcast(self, message):
         for bucket in self.waiters.values():
             bucket.send(message)
@@ -137,7 +139,8 @@ class Timer():
         self.__args = args if args else list()
         self.__kwargs = kwargs if kwargs else dict()
         if self.__repeat:
-            self.__timer = PeriodicCallback(partial(self.__callback_wrapper, self), self.__timeout * 1000)
+            self.__timer = PeriodicCallback(self.__callback_wrapper, self.__timeout * 1000)
+            self.__timer.start()
 
     def restart(self):
         if self.__timer is not None:
@@ -155,8 +158,9 @@ class Timer():
     def __start(self):
         if self.__repeat and not self.__timer.is_running():
             self.__timer.start()
-        else:
-            self.__timer = IOLoop.current().call_later(self.__timeout, self.__callback_wrapper, self)
+        # else:
+        #     print("calling later")
+        #     self.__timer = IOLoop.current().call_later(self.__timeout, self.__callback_wrapper, self)
 
     def __stop(self):
         if self.__repeat:
@@ -165,10 +169,7 @@ class Timer():
             IOLoop.current().remove_timeout(self.__timer)
 
     def __callback_wrapper(self):
-        try:
-            self.__callback(*self.__args, **self.__kwargs)
-        except Exception:
-            pass
+        IOLoop.current().add_callback(self.__callback, *self.__args, **self.__kwargs)
         if self.__repeat:
             self.__start()
 
