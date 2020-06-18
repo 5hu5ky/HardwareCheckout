@@ -26,7 +26,8 @@ class MainHandler(UserBaseHandler):
 
         # If no background queue update thread as started, start it
         if self.timer is None:
-            self.timer = Timer(self.updateQueues, timeout=5, args=(self.__class__,))
+            print("Scheduling")
+            self.timer = Timer(self.updateQueues, timeout=5)
 
         # check if use is logged in
         if self.current_user:
@@ -49,14 +50,21 @@ class MainHandler(UserBaseHandler):
         self.render('index.html', devices=devices, queues=queues, show_streams=show_streams, terminals=terminals)
 
     @classmethod
-    async def updateQueues(cls):
+    def updateQueues(cls):
+        '''
+        TODO: I couldn't get this to async. Don't know why.
+        '''
         with make_session() as session:
             # Start all the queries
-            future_WebUrls = DeviceQueue.get_all_web_urls_async(session)
-            future_WebUrlsRO = DeviceQueue.get_all_ro_urls_async(session)
-            future_Queues = DeviceType.get_queues_async(session)
+            # future_WebUrls = DeviceQueue.get_all_web_urls_async(session)
+            # future_WebUrlsRO = DeviceQueue.get_all_ro_urls_async(session)
+            # future_Queues = DeviceType.get_queues_async(session)
 
-            # Wait for the results
-            cls.RWTerminals = await future_WebUrls
-            cls.ROTerminals = await future_WebUrlsRO
-            cls.queues      = await future_Queues
+            # # Wait for the results
+            # cls.RWTerminals = await future_WebUrls
+            # cls.ROTerminals = await future_WebUrlsRO
+            # cls.queues      = await future_Queues
+
+            cls.RWTerminals = DeviceQueue.get_all_web_urls(session)
+            cls.ROTerminals = DeviceQueue.get_all_ro_urls(session)
+            cls.queues      = DeviceType.get_queues(session)
