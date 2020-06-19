@@ -91,13 +91,14 @@ sudo cat << EOF > $APP_PATH/HardwareCheckout/config.py
 db_path = 'postgresql+psycopg2://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME'
 EOF
 
+TDSK=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
 
-#Generate run.sh
+#Generate run.sh for local runs
 sudo cat << EOF > $APP_PATH/run.sh
-export TORNADO_SECRET_KEY=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
+export TORNADO_SECRET_KEY=$TDSK
+source /opt/HardwareCheckout/venv/bin/activate
 python3 -m HardwareCheckout
 EOF
-
 sudo chmod a+x $APP_PATH/run.sh
 
 #Turn it into a service
@@ -109,17 +110,18 @@ After=network.target
 [Service]
 User=root
 Restart=on-failure
+Environment=TORNADO_SECRET_KEY=$TDSK
 WorkingDirectory=/opt/HardwareCheckout/
-ExecStart=/opt/HardwareCheckout/run.sh
+ExecStart=/opt/HardwareCheckout/venv/bin/python3 -m HardwareCheckout
 
 [Install]
 WantedBy=multi-user.target
-EOF
+
 
 echo "Enabling Service..."
 sudo systemctl enable HardwareCheckout 
 sudo systemctl daemon-reload
-sudo systemctl start HardwareCheckout
+sudo systemctl start HardwareCheckout 
 
 
 echo "Done..."
