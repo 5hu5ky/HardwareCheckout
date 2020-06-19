@@ -1,10 +1,10 @@
-from tornado.web import Application, StaticFileHandler
+from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado_sqlalchemy import SQLAlchemy
 import os
 import json
 from datetime import datetime, timedelta
-from .config import db_path
 
+from .config import db_path
 from .main import main as main_blueprint
 from .auth import auth as auth_blueprint
 from .terminals import terms as terminal_blueprint
@@ -12,6 +12,20 @@ from .queue import queue as queue_blueprint
 from .device import device as device_blueprint
 
 # init SQLAlchemy so we can use it later in our models
+
+def create_redirect():
+    class sslRedirect(RequestHandler):
+        def get(self):
+            self.redirect('https://' + self.request.host, permanent=True)
+        def post(self):
+            self.redirect('https://' + self.request.host, permanent=True)
+
+    app = Application(
+        [
+            (r'/.*', sslRedirect)
+        ]
+    )
+    return app
 
 def create_app():
     """
