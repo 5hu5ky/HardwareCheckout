@@ -111,8 +111,8 @@ After=network.target
 User=root
 Restart=on-failure
 Environment=TORNADO_SECRET_KEY=$TDSK
-WorkingDirectory=/opt/HardwareCheckout/
-ExecStart=/opt/HardwareCheckout/venv/bin/python3 -m HardwareCheckout
+WorkingDirectory=$APP_PATH
+ExecStart=$APP_PATH/venv/bin/python3 -m HardwareCheckout
 
 [Install]
 WantedBy=multi-user.target
