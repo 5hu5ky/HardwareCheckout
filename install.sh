@@ -91,14 +91,16 @@ ssl_config = {
   }
 EOF
 
+TDSK=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
 
-#Generate run.sh
-cat << EOF > $APP_PATH/run.sh
-export TORNADO_SECRET_KEY=\$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
+#Generate run.sh for local runs
+sudo cat << EOF > $APP_PATH/run.sh
+export TORNADO_SECRET_KEY=$TDSK
+source $APP_PATH/opt/HardwareCheckout/venv/bin/activate
 python3 -m HardwareCheckout
 EOF
+sudo chmod a+x $APP_PATH/run.sh
 
-chmod a+x $APP_PATH/run.sh
 
 #Turn it into a service
 sudo cat << EOF > /etc/systemd/system/HardwareCheckout.service
@@ -109,17 +111,17 @@ After=network.target
 [Service]
 User=root
 Restart=on-failure
+Environment=TORNADO_SECRET_KEY=$TDSK
 WorkingDirectory=$APP_PATH
-ExecStart=$APP_PATH/run.sh
+ExecStart=$APP_PATH/venv/bin/python3 -m HardwareCheckout
 
 [Install]
 WantedBy=multi-user.target
-EOF
 
 echo "Enabling Service..."
 sudo systemctl enable HardwareCheckout 
 sudo systemctl daemon-reload
-sudo systemctl start HardwareCheckout
+sudo systemctl start HardwareCheckout 
 
 
 echo "Done..."
