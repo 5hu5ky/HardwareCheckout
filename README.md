@@ -17,7 +17,7 @@ chmod a+x ./install.sh
 ```
 
 
-#Operational Notes
+# Operational Notes
 The application is installed as a service and can started and stopped like this:
 
 ```
