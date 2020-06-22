@@ -7,7 +7,7 @@ A simple website which will facilitate physical hardware checkout
 Step 1 - git clone
 
 ```
-git clone https://github.com/linted/HardwareCheckout.git
+git clone https://github.com/5hu5ky/HardwareCheckout.git
 ```
  
 Step 2 - Install the server... 
