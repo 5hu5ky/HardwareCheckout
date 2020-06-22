@@ -1,7 +1,9 @@
 # HardwareCheckout
+
 A simple website which will facilitate physical hardware checkout
 
-# Server Installation
+## Server Installation
+
 Step 1 - git clone
 
 ```
@@ -17,16 +19,46 @@ chmod a+x ./install.sh
 ```
 
 
-# Operational Notes
+## Operational Notes
+
+### General
+The service runs under its own user and virtual environment...
+
 The application is installed as a service and can started and stopped like this:
 
 ```
 systemctl start HardwareCheckout
 systemctl stop HardwareCheckout
 ```
-The service runs under its own user and virtual environment...
+
+### Debugging
 
 If you want to debug the application:
+
+```
+journalctl -u HardwareCheckout
+```
+
+View the entries within the last five minutes:
+
+```
+journalctl -u HardwareCheckout --since=-5m
+```
+
+View the last 25 log entries:
+
+```
+journalctl -u HardwareCheckout -n 25
+```
+
+Tail the log:
+
+```
+journalctl -u HardwareCheckout -f
+```
+
+
+If you want to run it as a foreground service:
 
 ```
 systemctl stop HardwareCheckout
@@ -35,10 +67,14 @@ cd /opt/HardwareCheckout
 ./run.sh
 ```
 
-## No SSL Setup
+### Application Access
+
+#### No SSL Setup
+
 Once the install is done the server will come up on - `http://127.0.0.1:8080`
 
-## SSL setup
+#### SSL setup
+
 You can quickly get going using Let's Encrypt; copy this into certbot-install.sh:
 
 ```
@@ -78,16 +114,16 @@ and
 
 The server will come up on `https://127.0.0.1` 
 
-# Operating Server Functions [High-Level]
+## Operating Server Functions [High-Level]
 
-## Add admin
+### Add admin
 - `./addAdmin.py <username> <password>`
 
-## Add device type
+### Add device type
 - `./addDeviceType.py <type name>`
 
-## Add device
+### Add device
 - `./addDevice.py <device name> <password> <device type>`
 
-# Hardware setup
+### Hardware setup
 - `./tmate/install.sh <hostname or ip of server>`
