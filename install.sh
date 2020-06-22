@@ -135,7 +135,7 @@ EOF
 
 
 echo ""
-echo "Creating HardwareCheckout Service - to start the service:"
+echo "Creating HardwareCheckout Service - to start or stop the service:"
 echo "systemctl start|stop HardwareCheckout"
 echo ""
 sudo bash -c  "cat << EOF > /etc/systemd/system/HardwareCheckout.service

@@ -1,18 +1,82 @@
 # HardwareCheckout
 A simple website which will facilitate physical hardware checkout
 
-# Server
-
-Initial server set-up is done via install.sh - run that first... It does almost everything for you, but cook. Run it as root.
-
-The application is installed as a service and can be interacted like this:
+# Server Installation
+Step 1 - git clone
 
 ```
-service HardwareCheckout start
-service HardwareCheckout stop
+git clone https://github.com/linted/HardwareCheckout.git
+```
+ 
+Step 2 - Install the server... 
+
+```
+cd HardwareCheckout
+chmod a+x ./install.sh
+./install.sh
 ```
 
-The service runs in its own virtual environment...
+
+#Operational Notes
+The application is installed as a service and can started and stopped like this:
+
+```
+systemctl start HardwareCheckout
+systemctl stop HardwareCheckout
+```
+The service runs under its own user and virtual environment...
+
+If you want to debug the application:
+
+```
+systemctl stop HardwareCheckout
+su chvapp
+cd /opt/HardwareCheckout
+./run.sh
+```
+
+## No SSL Setup
+Once the install is done the server will come up on - `http://127.0.0.1:8080`
+
+## SSL setup
+You can quickly get going using Let's Encrypt; copy this into certbot-install.sh:
+
+```
+#!/bin/bash
+sudo apt-get update
+sudo apt-get install software-properties-common
+sudo add-apt-repository universe
+sudo add-apt-repository ppa:certbot/certbot
+sudo apt-get update
+
+sudo apt-get install certbot python-certbot-apache
+```
+
+run `./certbot-install.sh`
+
+This will install the certbot, once installed (if you are running apache):
+
+`sudo certbot --apache`
+
+Once installed configure the installation with the SSL key and cert by editing `/opt/HardwareCheckout/HardwareCheckout/config.py`
+
+Do not forget to switch users - `su chvapp`
+
+```
+...
+ssl_config = {
+  "certfile": "/etc/letsencrypt/live/<domain.name.com>/fullchain.pem",
+  "keyfile": "/etc/letsencrypt/live/<domain.name.com>/privkey.pem",
+
+  }
+
+```
+
+and
+
+`systemctl restart HardwareCheckout` - you will need to be root privileged for this...
+
+The server will come up on `https://127.0.0.1` 
 
 # Operating Server Functions [High-Level]
 
@@ -27,4 +91,3 @@ The service runs in its own virtual environment...
 
 # Hardware setup
 - `./tmate/install.sh <hostname or ip of server>`
-
