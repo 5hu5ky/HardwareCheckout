@@ -104,13 +104,13 @@ class SingleQueueHandler(UserBaseHandler):
             entry = await as_future(session.query(UserQueue).filter_by(userId=current_user_id, type=id).first)
             if entry:
                 self.render("error.html", error="User already registered for this queue")
-
-            # Add user to the queue
-            newEntry = UserQueue(userId=current_user_id, type=id)
-            session.add(newEntry)
+            else:
+                # Add user to the queue
+                newEntry = UserQueue(userId=current_user_id, type=id)
+                session.add(newEntry)
+                # Send them back to the front page
+                self.redirect(self.reverse_url("main"))
 
             # Check if someone is able to claim a device
             self.current_user.try_to_claim_device(session, id, on_user_assigned_device)
 
-            # Send them back to the front page
-            self.redirect(self.reverse_url("main"))
