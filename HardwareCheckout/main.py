@@ -1,5 +1,5 @@
 from .models import DeviceQueue, DeviceType
-from .webutil import Blueprint, noself, UserBaseHandler, Timer, make_session
+from .webutil import Blueprint, UserBaseHandler, Timer, make_session
 from tornado_sqlalchemy import as_future
 
 main = Blueprint()

@@ -16,6 +16,9 @@ from .models import DeviceQueue, User, db
 
 class UserBaseHandler(SessionMixin, RequestHandler):
     def get_current_user(self):
+        '''
+        Not allowed to be async
+        '''
         try:
             user_id = int(self.get_secure_cookie('user'))
             return self.session.query(User).filter_by(id=user_id).one()
@@ -27,6 +30,9 @@ class UserBaseHandler(SessionMixin, RequestHandler):
 
 class DeviceBaseHandler(SessionMixin, RequestHandler):
     def get_current_user(self):
+        '''
+        Not allowed to be async
+        '''
         if 'Authorization' not in self.request.headers:
             return self.unauthorized()
         if not self.request.headers['Authorization'].startswith('Basic '):
@@ -41,6 +47,9 @@ class DeviceBaseHandler(SessionMixin, RequestHandler):
             return self.unauthorized()
 
     def unauthorized(self):
+        '''
+        Not allowed to be async, used by get_current_user
+        '''
         self.set_header('WWW-Authenticate', 'Basic realm="CarHackingVillage"')
         self.set_status(401)
         return False
@@ -89,10 +98,6 @@ class Blueprint:
         return finalRoutes
 
 
-def noself(dict):
-    return {k: v for k, v in dict.items() if k != 'self'}
-
-
 class Waiters:
     def __init__(self):
         self.waiters = dict()
@@ -102,8 +107,10 @@ class Waiters:
             self.waiters[id] = WaiterBucket()
         return self.waiters[id]
 
-    # TODO can this be async?
     def broadcast(self, message):
+        '''
+        Not async. Send returns a future, just ignore it.
+        '''
         for bucket in self.waiters.values():
             bucket.send(message)
 
