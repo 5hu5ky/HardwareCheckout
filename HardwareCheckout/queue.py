@@ -9,12 +9,11 @@ from .webutil import Blueprint, Waiters, UserBaseHandler
 queue = Blueprint()
 
 
-def on_user_assigned_device(user, device):
+def on_user_assigned_device(userId, device):
     # TODO: set timer
-    device = {'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
-    message = {'type': 'new_device', 'device': device}
-    QueueWSHandler.waiters[user.id].send(message)
-
+    device_info = {'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
+    message = {'type': 'new_device', 'device': device_info}
+    return QueueWSHandler.waiters[userId].send(message)
 
 @event.listens_for(UserQueue, 'after_delete')
 def on_userqueue_delete(mapper, connection, target):
@@ -26,11 +25,6 @@ def on_userqueue_delete(mapper, connection, target):
 def on_userqueue_insert(mapper, connection, target):
     message = {'type': 'queue_grow', 'queue': target.type}
     QueueWSHandler.waiters.broadcast(message)
-
-
-# TODO: find a better way to do this
-# Assign here to avoid cyclical import
-User.assigned_device_callback = on_user_assigned_device
 
 
 @queue.route("/event")
@@ -55,7 +49,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
             self.waiters[-1].add(self)
 
     # TODO: find out when this runs and how to make it async
-    def on_sent(self, message):
+    def send(self, message):
         """Callback for webutil.Waiters"""
         try:
             return self.write_message(message)
@@ -64,7 +58,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     def on_message(self, message):
         """Callback from received WebSocket message."""
-        pass
+        print("Unhandled message received on websocket: {}".format(message))
 
     def on_close(self):
         if self.current_user:
@@ -114,7 +108,7 @@ class SingleQueueHandler(UserBaseHandler):
             session.add(newEntry)
 
             # Check if someone is able to claim a device
-            self.current_user.try_to_claim_device(session, id)
+            self.current_user.try_to_claim_device(session, id, on_user_assigned_device)
 
             # Send them back to the front page
             self.redirect(self.reverse_url("main"))

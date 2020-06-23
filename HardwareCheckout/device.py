@@ -33,7 +33,7 @@ from werkzeug.security import check_password_hash
 
 from .models import DeviceQueue, DeviceType, UserQueue, User
 from .webutil import Blueprint, DeviceWSHandler, Timer, make_session
-from .queue import QueueWSHandler
+from .queue import QueueWSHandler, on_user_assigned_device
 
 device = Blueprint()
 
@@ -178,8 +178,8 @@ class DeviceStateHandler(DeviceWSHandler):
 
         with make_session() as session:
             device = await as_future(session.query(DeviceQueue).filter_by(id=deviceID).first)
-            user = await as_future(session.query(User).filter_by(id=next_user).first)
-            User.assigned_device_callback(user, device)
+            userID = await as_future(session.query(User.id).filter_by(id=next_user).first)
+            await on_user_assigned_device(userID, device)
             
 
     @staticmethod

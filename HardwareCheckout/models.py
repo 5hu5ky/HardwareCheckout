@@ -43,7 +43,7 @@ class User(db.Model):
                 return True
         return False
 
-    def try_to_claim_device(self, session, device_type):
+    def try_to_claim_device(self, session, device_type, callback):
         if type(device_type) is not int:
             device_type = device_type.id
         device = (
@@ -58,9 +58,9 @@ class User(db.Model):
                 session.delete(uq)
             device.state = "in-queue"
             session.commit()
-            self.assigned_device_callback(device)
+            callback(self.id, device)
 
-    async def try_to_claim_device_async(self, session, device_type):
+    async def try_to_claim_device_async(self, session, device_type, callback):
         if type(device_type) is not int:
             device_type = device_type.id
         device = await as_future(
@@ -73,11 +73,7 @@ class User(db.Model):
                 session.delete(uq)
             device.state = "in-queue"
             session.commit()
-            self.assigned_device_callback(device)
-
-    def assigned_device_callback(self, device):
-        # TODO: remove?
-        pass
+            await callback(self.id, device)
 
 
 class Role(db.Model):
