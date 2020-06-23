@@ -97,14 +97,16 @@ class SingleQueueHandler(UserBaseHandler):
             self.render("error.html", error="Invalid Queue")
             return
 
+        current_user_id = self.current_user.id
+
         with self.make_session() as session:
             # Check if the user is already registered for a queue
-            entry = await as_future(session.query(UserQueue).filter_by(userId=self.current_user.id, type=id).first)
+            entry = await as_future(session.query(UserQueue).filter_by(userId=current_user_id, type=id).first)
             if entry:
                 self.render("error.html", error="User already registered for this queue")
 
             # Add user to the queue
-            newEntry = UserQueue(userId=self.current_user.id, type=id)
+            newEntry = UserQueue(userId=current_user_id, type=id)
             session.add(newEntry)
 
             # Check if someone is able to claim a device
