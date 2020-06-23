@@ -7,7 +7,7 @@ A simple website which will facilitate physical hardware checkout
 Step 1 - git clone
 
 ```
-git clone https://github.com/5hu5ky/HardwareCheckout.git
+git clone https://github.com/linted/HardwareCheckout.git
 ```
  
 Step 2 - Install the server... 
@@ -85,18 +85,23 @@ sudo add-apt-repository universe
 sudo add-apt-repository ppa:certbot/certbot
 sudo apt-get update
 
-sudo apt-get install certbot python-certbot-apache
+sudo apt-get install certbot 
 ```
 
 run `./certbot-install.sh`
 
-This will install the certbot, once installed (if you are running apache):
+This will install the certbot, once installed (if you are running apache as a proxy):
 
 `sudo certbot --apache`
 
+If running stand-alone:
+`sudo certbot certonly --standalone --preferred-challenges http -d example.com -d www.example.com`
+
+the certificates and key should be saved to `/etc/letsencrypt/live/example.com/fullchain.pem` and `/etc/letsencrypt/live/example.com/privkey.pem` respectively. 
+
 Once installed configure the installation with the SSL key and cert by editing `/opt/HardwareCheckout/HardwareCheckout/config.py`
 
-Do not forget to switch users - `su chvapp`
+Do not forget to switch users for editing - `su chvapp`
 
 ```
 ...
@@ -123,7 +128,12 @@ The server will come up on `https://127.0.0.1`
 - `./addDeviceType.py <type name>`
 
 ### Add device
-- `./addDevice.py <device name> <password> <device type>`
+- Adding multiple devices:
+`./addDevice.py -i <path/to/inifile> -t <devicetype>`
+
+- Add a single device:
+`./addDevice.py -u <devicename> -p <password> -t <devicetype>`
+
 
 ### Hardware setup
 - `./tmate/install.sh <hostname or ip of server>`
