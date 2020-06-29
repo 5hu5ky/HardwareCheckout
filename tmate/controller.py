@@ -109,9 +109,9 @@ class New_Session_Handler(pyinotify.ProcessEvent):
     sock_re = re.compile(r"tmate(\d+).sock")
 
     def my_init(self, client):
-        '''
+        """
         DO NOT OVERRIDE __init__() USE THIS FUNCTION INSTEAD
-        '''
+        """
         self.client = client
 
     def process_IN_CREATE(self, event):
@@ -147,8 +147,13 @@ class New_Session_Handler(pyinotify.ProcessEvent):
 
 
 class New_Device_Handler(pyinotify.ProcessEvent):
+    def my_init(self, profiles):
+        self.profiles = profiles
+        self.watch_manager = pyinotify.WatchManager()
+
     def process_IN_CREATE(self, event):
-        register_device(event.pathname)
+        register_device(event.pathname, self.profiles, self.watch_manager)
+
 
 def get_profiles():
     config = ConfigParser()
@@ -170,8 +175,9 @@ def get_profiles():
         all_profiles[key] = settings
     return all_profiles
 
-def register_device(path):
-    device_re = re.compile("^(device\d+)$")
+
+def register_device(path, profiles, watch_manager):
+    device_re = re.compile(r"^(device\d+)$")
     matches = device_re.match(path)
     if matches:
         profile_name = matches.group(1)
@@ -180,17 +186,16 @@ def register_device(path):
         if clientProfile:
 
             newClient = Client("wss://virtual.carhackingvillage.com")
-            newClient.connect(
-                clientProfile["username"], clientProfile["password"]
-            )
+            newClient.connect(clientProfile["username"], clientProfile["password"])
 
-            ACTIVE_CLIENTS[profile_num] = newClient
+            ACTIVE_CLIENTS[profile_name] = newClient
             # TODO do we need event_notifier
-            event_notifier = pyinotify.AsyncNotifier(watch_manager, New_Session_Handler(newClient))
-
-            watch_manager.add_watch(
-                os.path.join("/tmp/devices/", files), pyinotify.IN_CREATE
+            event_notifier = pyinotify.AsyncNotifier(
+                watch_manager, New_Session_Handler(newClient)
             )
+
+            watch_manager.add_watch(path, pyinotify.IN_CREATE)
+
 
 def main():
     if not os.path.exists("/tmp/devices"):
@@ -201,11 +206,15 @@ def main():
     # Create the watcher loop
     watch_manager = pyinotify.WatchManager()
 
+    device_handler = New_Device_Handler(profiles)
+
     # TODO do we need event_notifier?
-    event_notifier = pyinotify.AsyncNotifier(watch_manager, New_Device_Handler())
+    event_notifier = pyinotify.AsyncNotifier(
+        watch_manager, device_handler
+    )
 
     for files in os.listdir("/tmp/devices"):
         if os.path.isdir(files):
-            register_device(files)
+            register_device(files, profiles, device_handler.watch_manager)
 
     IOLoop.current().start()
