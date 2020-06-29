@@ -218,3 +218,7 @@ def main():
             register_device(files, profiles, device_handler.watch_manager)
 
     IOLoop.current().start()
+
+
+if __name__ == "__main__":
+    main()
