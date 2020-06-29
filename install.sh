@@ -110,7 +110,6 @@ EOF"
 
 sudo chown -R $DBUNAME:$DBUNAME $APP_PATH
 sudo -u $DBUNAME chmod a+x $APP_PATH/run.sh
-#sudo chown $DBUNAME:www-data $APP_PATH/$DBKEY
 sudo chmod 640 $APP_PATH/$DBKEY
 
 
