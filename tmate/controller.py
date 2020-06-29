@@ -41,7 +41,7 @@ class Client(object):
             + b64encode((username + ":" + password).encode()).decode()
         }
 
-    async def connect(self, username, password):
+    def connect(self, username, password):
         print("trying to connect")
         try:
             self.ws = await websocket_connect(
@@ -176,7 +176,7 @@ def get_profiles():
     return all_profiles
 
 
-def register_device(path, profiles):
+async def register_device(path, profiles):
     device_re = re.compile(r"^.*(device\d+)$")
     matches = device_re.match(path)
     if matches:
@@ -186,7 +186,7 @@ def register_device(path, profiles):
         if clientProfile:
             print("Registering new Client: {}".format(profile_name))
             newClient = Client("wss://virtual.carhackingvillage.com")
-            newClient.connect(clientProfile["username"], clientProfile["password"])
+            await newClient.connect(clientProfile["username"], clientProfile["password"])
 
             ACTIVE_CLIENTS[profile_name] = newClient
             watch_manager = pyinotify.WatchManager()
@@ -198,7 +198,7 @@ def register_device(path, profiles):
             watch_manager.add_watch(path, pyinotify.IN_CREATE)
 
 
-def main():
+async def main():
     if not os.path.exists("/tmp/devices"):
         os.mkdir("/tmp/devices")
 
@@ -216,11 +216,11 @@ def main():
     for files in os.listdir("/tmp/devices"):
         full_path = os.path.join("/tmp/devices", files)
         if os.path.isdir(full_path):
-            register_device(full_path, profiles)
+            await register_device(full_path, profiles)
 
     IOLoop.current().start()
     event_notifier.stop()
 
 
 if __name__ == "__main__":
-    main()
+    IOLoop.current().run_sync(main)
