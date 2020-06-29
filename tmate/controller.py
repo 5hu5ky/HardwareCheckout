@@ -218,7 +218,7 @@ def main():
     for files in os.listdir("/tmp/devices"):
         full_path = os.path.join("/tmp/devices", files)
         if os.path.isdir(full_path):
-            register_device(full_path, profiles, device_handler.watch_manager)
+            register_device(full_path, profiles)
 
     IOLoop.current().start()
     event_notifier.stop()
