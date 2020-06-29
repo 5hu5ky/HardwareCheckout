@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 
+UNAME=villager
+
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <URL> <Device Name>"
     exit 1
 fi
+
+echo "Creating device user $UNAME"
+##Creating a user with a home folder remove -m if you do not want a home folder###
+sudo adduser --disabled-password --gecos "" $UNAME --shell /bin/bash
+
+###Add villager to dialout group###
+sudo usermod -a -G dialout $UNAME
+
+###Generate a strong ssh key###
+sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -C "$UNAME@$HOSTNAME"
+
+
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
