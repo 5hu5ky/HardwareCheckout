@@ -152,6 +152,7 @@ class New_Device_Handler(pyinotify.ProcessEvent):
         self.watch_manager = pyinotify.WatchManager()
 
     def process_IN_CREATE(self, event):
+        print("New Device Created")
         register_device(event.pathname, self.profiles, self.watch_manager)
 
 
@@ -184,7 +185,7 @@ def register_device(path, profiles, watch_manager):
 
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
-
+            print("Registering new Client: {}".format(profile_name))
             newClient = Client("wss://virtual.carhackingvillage.com")
             newClient.connect(clientProfile["username"], clientProfile["password"])
 
@@ -212,10 +213,12 @@ def main():
     event_notifier = pyinotify.TornadoAsyncNotifier(
         watch_manager, IOLoop.current(), device_handler
     )
+    watch_manager.add_watch("/tmp/devices", pyinotify.IN_CREATE)
 
     for files in os.listdir("/tmp/devices"):
-        if os.path.isdir(files):
-            register_device(files, profiles, device_handler.watch_manager)
+        full_path = os.path.join("/tmp/devices", files)
+        if os.path.isdir(full_path):
+            register_device(full_path, profiles, device_handler.watch_manager)
 
     IOLoop.current().start()
     event_notifier.stop()
