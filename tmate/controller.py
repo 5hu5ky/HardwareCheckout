@@ -149,7 +149,6 @@ class New_Session_Handler(pyinotify.ProcessEvent):
 class New_Device_Handler(pyinotify.ProcessEvent):
     def my_init(self, profiles={}):
         self.profiles = profiles
-        self.watch_manager = pyinotify.WatchManager()
 
     def process_IN_CREATE(self, event):
         print("New Device Created")
@@ -177,8 +176,8 @@ def get_profiles():
     return all_profiles
 
 
-def register_device(path, profiles, watch_manager):
-    device_re = re.compile(r"^(device\d+)$")
+def register_device(path, profiles):
+    device_re = re.compile(r"^.*(device\d+)$")
     matches = device_re.match(path)
     if matches:
         profile_name = matches.group(1)
@@ -190,8 +189,9 @@ def register_device(path, profiles, watch_manager):
             newClient.connect(clientProfile["username"], clientProfile["password"])
 
             ACTIVE_CLIENTS[profile_name] = newClient
-            # TODO do we need event_notifier
-            event_notifier = pyinotify.TornadoAsyncNotifier(
+            watch_manager = pyinotify.WatchManager()
+
+            pyinotify.TornadoAsyncNotifier(
                 watch_manager, IOLoop.current(), New_Session_Handler(newClient)
             )
 
