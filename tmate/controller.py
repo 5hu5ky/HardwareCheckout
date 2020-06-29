@@ -192,7 +192,7 @@ def register_device(path, profiles):
             watch_manager = pyinotify.WatchManager()
 
             pyinotify.TornadoAsyncNotifier(
-                watch_manager, IOLoop.current(), New_Session_Handler(client=newClient)
+                watch_manager, IOLoop.current(), default_proc_fun=New_Session_Handler(client=newClient)
             )
 
             watch_manager.add_watch(path, pyinotify.IN_CREATE)
