@@ -13,11 +13,19 @@ from tornado.websocket import websocket_connect
 from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
 
+ACTIVE_CLIENTS = {}
+
 
 class Client(object):
-    states = ['ready', 'in-queue', 'in-use', 
-            'want-deprovision', 'is-deprovisioned', 
-            'want-provision', 'is-provisioned']
+    states = [
+        "ready",
+        "in-queue",
+        "in-use",
+        "want-deprovision",
+        "is-deprovisioned",
+        "want-provision",
+        "is-provisioned",
+    ]
 
     def __init__(self, url, timeout=300):
         self.url = url
@@ -28,18 +36,18 @@ class Client(object):
         # self.ioloop.start()
 
     def auth_header(self, username, password):
-        return {'Authorization': 'Basic ' + b64encode((username + ':' + password).encode()).decode()}
+        return {
+            "Authorization": "Basic "
+            + b64encode((username + ":" + password).encode()).decode()
+        }
 
     async def connect(self, username, password):
         print("trying to connect")
         try:
             self.ws = await websocket_connect(
-                    HTTPRequest(
-                        url=self.url, 
-                        headers=self.auth_header(username, password)
-                        ),
-                    on_message_callback=self.handle_message
-                )
+                HTTPRequest(url=self.url, headers=self.auth_header(username, password)),
+                on_message_callback=self.handle_message,
+            )
 
             PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
         except Exception:
@@ -50,10 +58,10 @@ class Client(object):
         if self.ws is None:
             self.connect()
         else:
-            self.ws.write_message(json_encode({"status":"keep-alive"}))
+            self.ws.write_message(json_encode({"status": "keep-alive"}))
 
     async def handle_message(self, message):
-        #TODO make async and fix
+        # TODO make async and fix
         data = json_decode(message)
         state = data.get("state", False)
         if not state or state not in self.states:
@@ -62,57 +70,49 @@ class Client(object):
             if not self.is_provisioned:
                 if not self.provision():
                     print("Error: provision.sh returned {}".format(returnCode))
-                    self.ws.write_message(json_encode({'status':'provision-failed'}))
+                    self.ws.write_message(json_encode({"status": "provision-failed"}))
                     return
-            self.ws.write_message(json_encode({'state':'is-provisioned','ssh':self.ssh,'web':self.web,'web_ro':self.web_ro}))
-        elif state == 'want-deprovision':
+            self.ws.write_message(
+                json_encode(
+                    {
+                        "state": "is-provisioned",
+                        "ssh": self.ssh,
+                        "web": self.web,
+                        "web_ro": self.web_ro,
+                    }
+                )
+            )
+        elif state == "want-deprovision":
             if self.is_provisioned:
                 if not self.deprovision():
                     print("Error: deprovision.sh returned {}".format(returnCode))
-                    self.ws.write_message(json_encode({'status':'deprovision-failed'}))
+                    self.ws.write_message(json_encode({"status": "deprovision-failed"}))
                     return
-            self.ws.write_message(json_encode({'status':'is-deprovisioned'}))
-        elif state == 'update-expiration':
-            with open(self.profile['timestamp_file'], 'w') as fout:
-                fout.write(str(int(data['expiration'])))
+            self.ws.write_message(json_encode({"status": "is-deprovisioned"}))
+        elif state == "update-expiration":
+            with open(self.profile["timestamp_file"], "w") as fout:
+                fout.write(str(int(data["expiration"])))
 
-        return            
+        return
 
-
-    def deprovision(self):
-        '''
-        TODO: use this to kill a session
-        '''
+    def provision(self, ssh, web, web_ro):
         pass
 
+    def deprovision(self):
+        """
+        TODO: use this to kill a session
+        """
+        pass
 
 
 class New_Session_Handler(pyinotify.ProcessEvent):
     sock_re = re.compile(r"tmate(\d+).sock")
 
-    def get_profiles(self):
-        # TODO fix this function
-        config = ConfigParser()
-        config.read("/opt/hc-client/.config.ini")
-
-        self.all_profiles = {}
-
-        for key in config:
-            profile = config[key]
-
-            if not profile.get("username", False) or not profile.get("password", False):
-                continue
-
-            settings = {
-                "username": profile['username'],
-                "password": profile['password']
-            }
-
-            self.all_profiles[key] = settings
-
-
-    def my_init(self):
-        self.get_profiles()
+    def my_init(self, client):
+        '''
+        DO NOT OVERRIDE __init__() USE THIS FUNCTION INSTEAD
+        '''
+        self.client = client
 
     def process_IN_CREATE(self, event):
         """
@@ -146,20 +146,66 @@ class New_Session_Handler(pyinotify.ProcessEvent):
             # TODO: Connect and talk to the server
 
 
+class New_Device_Handler(pyinotify.ProcessEvent):
+    def process_IN_CREATE(self, event):
+        register_device(event.pathname)
+
+def get_profiles():
+    config = ConfigParser()
+    config.read("/opt/hc-client/.config.ini")
+
+    all_profiles = {}
+
+    for key in config:
+        profile = config[key]
+
+        if not profile.get("username", False) or not profile.get("password", False):
+            continue
+
+        settings = {
+            "username": profile["username"],
+            "password": profile["password"],
+        }
+
+        all_profiles[key] = settings
+    return all_profiles
+
+def register_device(path):
+    device_re = re.compile("^(device\d+)$")
+    matches = device_re.match(path)
+    if matches:
+        profile_name = matches.group(1)
+
+        clientProfile = profiles.get(profile_name, False)
+        if clientProfile:
+
+            newClient = Client("wss://virtual.carhackingvillage.com")
+            newClient.connect(
+                clientProfile["username"], clientProfile["password"]
+            )
+
+            ACTIVE_CLIENTS[profile_num] = newClient
+            # TODO do we need event_notifier
+            event_notifier = pyinotify.AsyncNotifier(watch_manager, New_Session_Handler(newClient))
+
+            watch_manager.add_watch(
+                os.path.join("/tmp/devices/", files), pyinotify.IN_CREATE
+            )
 
 def main():
-    if not os.path.exists('/tmp/devices'):
-        os.mkdir('/tmp/devices')
+    if not os.path.exists("/tmp/devices"):
+        os.mkdir("/tmp/devices")
 
-    # Create the wss client
-    c = Client("wss://virtual.carhackingvillage.com") # TODO
+    profiles = get_profiles()
 
     # Create the watcher loop
     watch_manager = pyinotify.WatchManager()
-    event_notifier = pyinotify.AsyncNotifier(watch_manager, New_Session_Handler())
+
+    # TODO do we need event_notifier?
+    event_notifier = pyinotify.AsyncNotifier(watch_manager, New_Device_Handler())
 
     for files in os.listdir("/tmp/devices"):
         if os.path.isdir(files):
-            watch_manager.add_watch(os.path.join("/tmp/devices/", files), pyinotify.IN_CREATE)
-    
+            register_device(files)
+
     IOLoop.current().start()
