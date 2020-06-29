@@ -41,7 +41,7 @@ class Client(object):
             + b64encode((username + ":" + password).encode()).decode()
         }
 
-    def connect(self, username, password):
+    async def connect(self, username, password):
         print("trying to connect")
         try:
             self.ws = await websocket_connect(
@@ -218,9 +218,10 @@ async def main():
         if os.path.isdir(full_path):
             await register_device(full_path, profiles)
 
-    IOLoop.current().start()
+    
     event_notifier.stop()
 
 
 if __name__ == "__main__":
-    IOLoop.current().run_sync(main)
+    IOLoop.current().add_callback(main)
+    IOLoop.current().start()
