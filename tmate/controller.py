@@ -192,7 +192,7 @@ def register_device(path, profiles):
             watch_manager = pyinotify.WatchManager()
 
             pyinotify.TornadoAsyncNotifier(
-                watch_manager, IOLoop.current(), New_Session_Handler(newClient)
+                watch_manager, IOLoop.current(), New_Session_Handler(client=newClient)
             )
 
             watch_manager.add_watch(path, pyinotify.IN_CREATE)
@@ -207,11 +207,9 @@ def main():
     # Create the watcher loop
     watch_manager = pyinotify.WatchManager()
 
-    device_handler = New_Device_Handler(profiles)
-
     # TODO do we need event_notifier?
     event_notifier = pyinotify.TornadoAsyncNotifier(
-        watch_manager, IOLoop.current(), device_handler
+        watch_manager, IOLoop.current(), New_Device_Handler(profiles=profiles)
     )
     watch_manager.add_watch("/tmp/devices", pyinotify.IN_CREATE)
 
