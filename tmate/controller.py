@@ -190,8 +190,8 @@ def register_device(path, profiles, watch_manager):
 
             ACTIVE_CLIENTS[profile_name] = newClient
             # TODO do we need event_notifier
-            event_notifier = pyinotify.AsyncNotifier(
-                watch_manager, New_Session_Handler(newClient)
+            event_notifier = pyinotify.TornadoAsyncNotifier(
+                watch_manager, IOLoop.current(), New_Session_Handler(newClient)
             )
 
             watch_manager.add_watch(path, pyinotify.IN_CREATE)
@@ -209,8 +209,8 @@ def main():
     device_handler = New_Device_Handler(profiles)
 
     # TODO do we need event_notifier?
-    event_notifier = pyinotify.AsyncNotifier(
-        watch_manager, device_handler
+    event_notifier = pyinotify.TornadoAsyncNotifier(
+        watch_manager, IOLoop.current(), device_handler
     )
 
     for files in os.listdir("/tmp/devices"):
@@ -218,6 +218,7 @@ def main():
             register_device(files, profiles, device_handler.watch_manager)
 
     IOLoop.current().start()
+    event_notifier.stop()
 
 
 if __name__ == "__main__":
