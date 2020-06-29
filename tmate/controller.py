@@ -106,7 +106,7 @@ class Client(object):
 
 
 class New_Session_Handler(pyinotify.ProcessEvent):
-    sock_re = re.compile(r"tmate(\d+).sock")
+    sock_re = re.compile(r"^tmate(\d+).sock$")
 
     def my_init(self, client=None):
         """
@@ -121,6 +121,12 @@ class New_Session_Handler(pyinotify.ProcessEvent):
         match = self.sock_re.match(os.path.basename(event.pathname))
         if match:
             print("A new tmate socket got created!")
+
+            try:
+                p = subprocess.Popen(["tmate", "-S", event.pathname, "wait", "tmate-ready"]).communicate(timeout=5)
+            except Exception as e:
+                print("Couldn't wait: {}".format(e))
+                return
 
             # Get the ssh info
             p = subprocess.Popen(
