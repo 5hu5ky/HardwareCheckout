@@ -108,7 +108,7 @@ class Client(object):
 class New_Session_Handler(pyinotify.ProcessEvent):
     sock_re = re.compile(r"tmate(\d+).sock")
 
-    def my_init(self, client):
+    def my_init(self, client=None):
         """
         DO NOT OVERRIDE __init__() USE THIS FUNCTION INSTEAD
         """
@@ -147,7 +147,7 @@ class New_Session_Handler(pyinotify.ProcessEvent):
 
 
 class New_Device_Handler(pyinotify.ProcessEvent):
-    def my_init(self, profiles):
+    def my_init(self, profiles={}):
         self.profiles = profiles
         self.watch_manager = pyinotify.WatchManager()
 
