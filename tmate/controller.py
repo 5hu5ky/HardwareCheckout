@@ -14,7 +14,7 @@ from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
 
 ACTIVE_CLIENTS = {}
-
+device_re = re.compile(r"^.*(device\d+)$")
 
 class Client(object):
     states = [
@@ -32,7 +32,9 @@ class Client(object):
         self.timeout = timeout
         self.ioloop = IOLoop.current()
         self.ws = None
-
+        self.ssh = None
+        self.web = None
+        self.web_ro = None
         # self.ioloop.start()
 
     def auth_header(self, username, password):
@@ -67,21 +69,11 @@ class Client(object):
         if not state or state not in self.states:
             return
         elif state == "want-provision":
-            if not self.is_provisioned:
-                if not self.provision():
-                    print("Error: provision.sh returned {}".format(returnCode))
-                    self.ws.write_message(json_encode({"status": "provision-failed"}))
-                    return
-            self.ws.write_message(
-                json_encode(
-                    {
-                        "state": "is-provisioned",
-                        "ssh": self.ssh,
-                        "web": self.web,
-                        "web_ro": self.web_ro,
-                    }
-                )
-            )
+            if not self.ssh or not self.web or not self.web_ro:
+                print("Error: not provisoned {}".format(returnCode))
+                self.ws.write_message(json_encode({"status": "provision-failed"}))
+                return
+            self.want_provision = True
         elif state == "want-deprovision":
             if self.is_provisioned:
                 if not self.deprovision():
@@ -96,7 +88,19 @@ class Client(object):
         return
 
     def provision(self, ssh, web, web_ro):
-        pass
+        self.ssh = ssh
+        self.web = web
+        self.web_ro = web_ro
+        self.ws.write_message(
+            json_encode(
+                {
+                    "state": "is-provisioned",
+                    "ssh": self.ssh,
+                    "web": self.web,
+                    "web_ro": self.web_ro,
+                }
+            )
+        )
 
     def deprovision(self):
         """
@@ -119,13 +123,17 @@ class New_Session_Handler(pyinotify.ProcessEvent):
         This will handle reading in the new session information and sending it back to the server
         """
         match = self.sock_re.match(os.path.basename(event.pathname))
-        if match:
+        check = device_re.match(os.path.dirname(event.pathname)) # used to make sure the right sock got made in the right folder
+        if match and check and match.group(1) == check.group(1):
             print("A new tmate socket got created!")
 
             try:
-                p = subprocess.Popen(["tmate", "-S", event.pathname, "wait", "tmate-ready"]).communicate(timeout=5)
+                p = subprocess.Popen(
+                    ["tmate", "-S", event.pathname, "wait", "tmate-ready"]
+                ).communicate(timeout=5)
             except Exception as e:
                 print("Couldn't wait: {}".format(e))
+                self.client.provision(None, None, None)
                 return
 
             # Get the ssh info
@@ -183,7 +191,6 @@ def get_profiles():
 
 
 async def register_device(path, profiles):
-    device_re = re.compile(r"^.*(device\d+)$")
     matches = device_re.match(path)
     if matches:
         profile_name = matches.group(1)
@@ -192,13 +199,17 @@ async def register_device(path, profiles):
         if clientProfile:
             print("Registering new Client: {}".format(profile_name))
             newClient = Client("wss://virtual.carhackingvillage.com")
-            await newClient.connect(clientProfile["username"], clientProfile["password"])
+            await newClient.connect(
+                clientProfile["username"], clientProfile["password"]
+            )
 
             ACTIVE_CLIENTS[profile_name] = newClient
             watch_manager = pyinotify.WatchManager()
 
             pyinotify.TornadoAsyncNotifier(
-                watch_manager, IOLoop.current(), default_proc_fun=New_Session_Handler(client=newClient)
+                watch_manager,
+                IOLoop.current(),
+                default_proc_fun=New_Session_Handler(client=newClient),
             )
 
             watch_manager.add_watch(path, pyinotify.IN_CREATE)
@@ -224,7 +235,6 @@ async def main():
         if os.path.isdir(full_path):
             await register_device(full_path, profiles)
 
-    
     event_notifier.stop()
 
 
