@@ -24,5 +24,5 @@ class RWTerminalHandler(UserBaseHandler):
             self.redirect(self.reverse_url("ROTerminals"))
 
         with self.make_session() as session:
-            results = await as_future(session.query(DeviceQueue.webUrl,DeviceQueue.sshAddr).all)
+            results = await as_future(session.query(DeviceQueue.name,DeviceQueue.webUrl,DeviceQueue.sshAddr,DeviceQueue.state).all)
         self.write({"urls":results})
