@@ -32,7 +32,7 @@ from tornado_sqlalchemy import as_future
 from werkzeug.security import check_password_hash
 
 from .models import DeviceQueue, DeviceType, UserQueue, User
-from .webutil import Blueprint, DeviceWSHandler, Timer, make_session
+from .webutil import Blueprint, UserBaseHandler, DeviceWSHandler, Timer, make_session
 from .queue import QueueWSHandler, on_user_assigned_device
 
 device = Blueprint()
@@ -70,6 +70,10 @@ class DeviceStateHandler(DeviceWSHandler):
         await self.device_put(state, ssh=ssh_addr, web=web_addr, web_ro=webro_addr)
 
     async def device_put(self, state, ssh=None, web=None, web_ro=None):
+        # if the new status is invalid
+        if state not in ('provisioned', 'deprovisioned', 'client-connected'):
+            return
+
         # always update the urls if available
         with self.make_session() as session:
             device = await as_future(session.query(DeviceQueue).filter_by(id=self.device).first)
@@ -89,13 +93,13 @@ class DeviceStateHandler(DeviceWSHandler):
             # write to the db
             session.add(device)
 
+
+
+        return
+
         # if we are in a failure state
         if oldState in ('provision-failed', 'deprovision-failed', 'keep-alive'):
             return 
-
-        # if the new status is invalid
-        if state not in ('is-provisioned', 'is-deprovisioned', 'client-connected'):
-            return
         
         # if the new status is provisioned and we are correctly in want provision
         if state == 'is-provisioned' and oldState == 'want-provision':
@@ -246,3 +250,17 @@ class DeviceStateHandler(DeviceWSHandler):
                 # elif device.state == "in-use":
                 #     DeviceStateHandler.device_in_use(device)
         
+
+@device.route('/test')
+class TmateStateHandler(UserBaseHandler):
+    def get(self):
+        # send them home
+        self.redirect(self.reverse_url("main"))
+
+    def post(self):
+        try:
+            data = json_decode(self.request.body)
+        except Exception:
+            self.redirect(self.reverse_url("main"))
+        
+        print(data)
