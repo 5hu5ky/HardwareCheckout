@@ -120,10 +120,11 @@ class DeviceQueue(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(200), unique=True)
     password = Column(String(93), unique=True)
+    entity_id = Column(String(200), unique=True)
     sshAddr = Column(String(200))
     webUrl = Column(String(200))
     roUrl = Column(String(200))
-    state = Column(String(200))
+    state = Column(String(200)) # TODO do we need this now?
     expiration = Column(DateTime)
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
