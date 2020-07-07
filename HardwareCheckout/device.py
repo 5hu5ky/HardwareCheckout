@@ -205,6 +205,7 @@ class DeviceStateHandler(UserBaseHandler):
     @staticmethod
     async def return_device(deviceID):
         raise NotImplementedError("TODO: how?")
+        
         # await DeviceStateHandler.deprovision_device(deviceID)
         # await DeviceStateHandler.send_message_to_owner(device, 'device_lost')
 
@@ -256,9 +257,6 @@ class DeviceStateHandler(UserBaseHandler):
 
     @staticmethod
     async def __callback():
-        """
-        TODO: change query to filter on ready state
-        """
         with make_session() as session:
             for deviceID, deviceType in await as_future(
                 session.query(DeviceQueue.id, DeviceQueue.type)
@@ -267,3 +265,44 @@ class DeviceStateHandler(UserBaseHandler):
             ):
                 DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
 
+
+@device.route("/controller")
+class ControllerHandler(DeviceWSHandler):
+    __listeners = {}
+
+    async def open(self):
+        # TODO : change this check to require a controller user name and password
+        # not just any device.
+        self.device = await self.check_authentication()
+        self.__listeners[self.device] = self
+
+    async def on_message(self, message):
+        try:
+            data = json_decode(message)
+        except Exception:
+            return
+
+        msg_type = data.get("type", None)
+        params = data.get("params", None)
+
+        if not msg_type:
+            return
+        elif msg_type == "register":
+            if not params:
+                return
+            try:
+                for device in params:
+                    self.__listeners[device] = self
+            except Exception:
+                return
+
+    async def close(self):
+        self.__listeners.pop(self.device)
+
+    @classmethod
+    async def restart_device(cls, device):
+        try:
+            await cls.__listeners[device].write_message({"type":"restart", "params":device})
+        except Exception:
+            return False
+        return True
