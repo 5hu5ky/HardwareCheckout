@@ -57,7 +57,6 @@ class DeviceStateHandler(UserBaseHandler):
         try:
             data = json_decode(self.request.body)
         except Exception:
-            self.redirect(self.reverse_url("main"))
             return
 
         message_type = data.get("type", None)
@@ -65,7 +64,6 @@ class DeviceStateHandler(UserBaseHandler):
         user_data = data.get("userdata", None)
         params = data.get("params", None)
         if not message_type or not entity or not user_data or not params:
-            self.redirect(self.reverse_url("main"))
             return
 
         if message_type == "session_register":
@@ -82,7 +80,6 @@ class DeviceStateHandler(UserBaseHandler):
         try:
             username, password = b64decode(user_data).decode().split("=")
         except Exception:
-            self.redirect(self.reverse_url("main"))
             return
 
         # Checks the db to see if this is valid user data
@@ -92,11 +89,9 @@ class DeviceStateHandler(UserBaseHandler):
                     session.query(DeviceQueue).filter_by(name=username).one
                 )
             except Exception:
-                self.redirect(self.reverse_url("main"))
                 return
 
             if not check_password_hash(device.password, password):
-                self.redirect(self.reverse_url("main"))
                 return
 
             # register entity id with db and update ssh/web/webro info
@@ -105,7 +100,6 @@ class DeviceStateHandler(UserBaseHandler):
             stoken = params.get("stoken", None)
             stoken_ro = params.get("stoken_ro", None)
             if not ssh_fmt or not web_fmt or not stoken or not stoken_ro:
-                self.redirect(self.reverse_url("main"))
                 return
 
             device.sshAddr = ssh_fmt % stoken
@@ -122,7 +116,6 @@ class DeviceStateHandler(UserBaseHandler):
     async def handle_session_join(self, entity, user_data, params):
         # Check if it is a read only session. We only care about R/W sessions
         if params.get("readonly", True):
-            self.redirect(self.reverse_url("main"))
             return
 
         with make_session() as session:
@@ -131,7 +124,6 @@ class DeviceStateHandler(UserBaseHandler):
                     session.query(DeviceQueue).filter_by(entity_id=entity).one
                 )
             except Exception:
-                self.redirect(self.reverse_url("main"))
                 return
 
             if device.state != "in-use":
@@ -148,7 +140,6 @@ class DeviceStateHandler(UserBaseHandler):
                     session.query(DeviceQueue).filter_by(entity_id=entity).one
                 )
             except Exception:
-                self.redirect(self.reverse_url("main"))
                 return
 
             device.state = "deprovisioned"
