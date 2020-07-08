@@ -22,6 +22,12 @@ for i in range(args.count):
         "data_dir": data_dir,
     }
 
+# TODO better password generation
+config["controller"] = {
+    "username": "{}-controller".format(args.prefix),
+    "password": uuid4(),
+}
+
 with open("/opt/hc-client/.config.ini", "w") as confout:
     config.write(confout)
 
