@@ -142,7 +142,7 @@ async def main():
 
     # TODO do we need event_notifier?
     event_notifier = pyinotify.TornadoAsyncNotifier(
-        watch_manager, IOLoop.current(), New_Device_Handler(newClient, profiles=profiles)
+        watch_manager, IOLoop.current(), New_Device_Handler(client=newClient, profiles=profiles)
     )
     watch_manager.add_watch("/tmp/devices", pyinotify.IN_CREATE)
 
