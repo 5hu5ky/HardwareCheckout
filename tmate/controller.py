@@ -85,7 +85,7 @@ class Client(object):
         return True
 
     async def register_device(self, device):
-        self.ws.write_message({'type':"register", "params":device})
+        self.ws.write_message(json_encode({'type':"register", "params":device}))
 
 
 class New_Device_Handler(pyinotify.ProcessEvent):
