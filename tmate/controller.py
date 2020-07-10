@@ -128,10 +128,8 @@ async def main():
 
     profiles = get_profiles()
 
-    newClient = Client("wss://virtual.carhackingvillage.com")
-    await newClient.connect(
-        profiles['controller']["username"], profiles['controller']["password"]
-    )
+    newClient = Client("wss://virtual.carhackingvillage.com", profiles['controller']["username"], profiles['controller']["password"])
+    await newClient.connect()
 
     # Create the watch manager
     watch_manager = pyinotify.WatchManager()
