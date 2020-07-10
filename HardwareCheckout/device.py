@@ -263,7 +263,7 @@ class DeviceStateHandler(UserBaseHandler):
                 .filter_by(state="provisioned")
                 .all
             ):
-                DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
+                await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
 
 
 @device.route("/controller")
