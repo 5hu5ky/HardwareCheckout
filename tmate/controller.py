@@ -81,13 +81,18 @@ class Client(object):
             return False
         return True
 
+    async def register_device(self, device):
+        self.write_message({'type':"register", "params":device})
+
+
 class New_Device_Handler(pyinotify.ProcessEvent):
-    def my_init(self, profiles={}):
+    def my_init(self, client, profiles={}):
+        self.client = client
         self.profiles = profiles
 
     def process_IN_CREATE(self, event):
         print("New Device Created")
-        register_device(event.pathname, self.profiles, self.watch_manager)
+        register_device(event.pathname, self.client, self.profiles)
 
 
 def get_profiles():
@@ -111,7 +116,7 @@ def get_profiles():
     return all_profiles
 
 
-async def register_device(path, profiles):
+async def register_device(path, client, profiles):
     matches = device_re.match(path)
     if matches:
         profile_name = matches.group(1)
@@ -119,6 +124,7 @@ async def register_device(path, profiles):
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
             print("Registering new Client: {}".format(profile_name))
+            client
             
 
 
@@ -143,7 +149,7 @@ async def main():
     for files in os.listdir("/tmp/devices"):
         full_path = os.path.join("/tmp/devices", files)
         if os.path.isdir(full_path):
-            await register_device(full_path, profiles)
+            await register_device(full_path, newClient, profiles)
 
     # event_notifier.stop()
 
