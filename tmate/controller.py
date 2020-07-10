@@ -44,6 +44,9 @@ class Client(object):
             print("connection error")
             self.ws = None
 
+        if self.ws is None:
+            raise Exception("ws is none. Idk what happened.")
+
     def keep_alive(self):
         if self.ws is None:
             self.connect()
@@ -134,7 +137,7 @@ async def main():
 
     profiles = get_profiles()
 
-    newClient = Client("wss://virtual.carhackingvillage.com", profiles['controller']["username"], profiles['controller']["password"])
+    newClient = Client("wss://virtual.carhackingvillage.com/device/controller", profiles['controller']["username"], profiles['controller']["password"])
     await newClient.connect()
 
     # Create the watch manager
