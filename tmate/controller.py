@@ -35,17 +35,25 @@ class Client(object):
         print("trying to connect")
         try:
             self.ws = await websocket_connect(
-                HTTPRequest(url=self.url, headers=self.auth_header(self.username, self.password)),
-                on_message_callback=self.handle_message,
+                HTTPRequest(url=self.url, headers=self.auth_header(self.username, self.password))
             )
 
             PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
+            IOLoop.current().add_callback(self.recv_loop)
         except Exception:
             print("connection error")
             self.ws = None
 
         if self.ws is None:
             raise Exception("ws is none. Idk what happened.")
+
+    async def recv_loop(self):
+        while True:
+            msg = await self.ws.read_message()
+            if msg is None:
+                break
+            else:
+                self.handle_message(msg)
 
     def keep_alive(self):
         if self.ws is None:
