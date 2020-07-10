@@ -65,15 +65,16 @@ class Client(object):
         elif msg_type == 'restart':
             print("Got restart request for {}".format(params))
             # TODO find this device and send it a studown command
-            self.deprovision(params)
+            await self.deprovision(params)
 
 
-    def deprovision(self, device):
+    async def deprovision(self, device):
         p = subprocess(
-            ["tmate", "-S", os.path.join("/tmp/devices/", device, "{}.sock".format(device)), "wait", "tmate-ready"],
-            stdout = subprocess.STREAM,
+            ["tmate", "-S", os.path.join("/tmp/devices/", device, "{}.sock".format(device)), "wait", "tmate-ready"], 
+            stdout = subprocess.STREAM, 
             stderr = subprocess.STREAM
-        )
+            )
+
         try:
             await p.wait_for_exit()
         except Exception:
