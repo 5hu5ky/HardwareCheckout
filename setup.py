@@ -17,12 +17,15 @@ if args.clean:
     else:
         db.drop_all()
 
-db.create_all()
+try:
+    db.create_all()
 
-session = sessionmaker(bind=create_engine(db_path))
-s = session()
-s.add(Role(name="Human"))
-s.add(Role(name="Device"))
-s.add(Role(name="Admin"))
+    session = sessionmaker(bind=create_engine(db_path))
+    s = session()
+    s.add(Role(name="Human"))
+    s.add(Role(name="Device"))
+    s.add(Role(name="Admin"))
 
-s.commit()
+    s.commit()
+except Exception as e:
+    print("Caught the following exception. Does the DB already exist?\n{}".format(e))
