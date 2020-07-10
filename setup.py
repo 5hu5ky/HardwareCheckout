@@ -11,8 +11,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--clean", help="remove existing database if it exists", action="store_true")
 args = parser.parse_args()
 
-if os.path.isfile(db_path[9:]):
-    os.unlink(db_path[9:])
+if args.clean:
+    if os.path.isfile(db_path[9:]):
+        os.unlink(db_path[9:])
+    else:
+        db.drop_all()
 
 db.create_all()
 
