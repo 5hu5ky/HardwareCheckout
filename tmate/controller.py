@@ -124,7 +124,7 @@ async def register_device(path, client, profiles):
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
             print("Registering new Client: {}".format(profile_name))
-            client.register_device(profile_name)
+            await client.register_device(profile_name)
             
 
 
