@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import re
-import subprocess
 from configparser import ConfigParser
 import asyncore
 from base64 import b64encode
@@ -12,30 +11,19 @@ from tornado import gen
 from tornado.websocket import websocket_connect
 from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
+from tornado.process import Subprocess as subprocess
 
 ACTIVE_CLIENTS = {}
 device_re = re.compile(r"^.*(device\d+)$")
 
 class Client(object):
-    states = [
-        "ready",
-        "in-queue",
-        "in-use",
-        "want-deprovision",
-        "is-deprovisioned",
-        "want-provision",
-        "is-provisioned",
-    ]
+    devices = {}
 
-    def __init__(self, url, timeout=300):
+    def __init__(self, url, username, password, timeout = 300):
         self.url = url
+        self.username = username
+        self.password = password
         self.timeout = timeout
-        self.ioloop = IOLoop.current()
-        self.ws = None
-        self.ssh = None
-        self.web = None
-        self.web_ro = None
-        # self.ioloop.start()
 
     def auth_header(self, username, password):
         return {
@@ -43,11 +31,11 @@ class Client(object):
             + b64encode((username + ":" + password).encode()).decode()
         }
 
-    async def connect(self, username, password):
+    async def connect(self):
         print("trying to connect")
         try:
             self.ws = await websocket_connect(
-                HTTPRequest(url=self.url, headers=self.auth_header(username, password)),
+                HTTPRequest(url=self.url, headers=self.auth_header(self.username, self.password)),
                 on_message_callback=self.handle_message,
             )
 
@@ -60,105 +48,37 @@ class Client(object):
         if self.ws is None:
             self.connect()
         else:
-            self.ws.write_message(json_encode({"status": "keep-alive"}))
+            print("Keep Alive")
+            self.ws.write_message(json_encode({"type": "keep-alive"}))
 
     async def handle_message(self, message):
         # TODO make async and fix
-        data = json_decode(message)
-        state = data.get("state", False)
-        if not state or state not in self.states:
+        try:
+            data = json_decode(message)
+            msg_type = data.get("type", None)
+            params = data.get("params", None)
+        except Exception:
             return
-        elif state == "want-provision":
-            if not self.ssh or not self.web or not self.web_ro:
-                print("Error: not provisoned {}".format(returnCode))
-                self.ws.write_message(json_encode({"status": "provision-failed"}))
-                return
-            self.want_provision = True
-        elif state == "want-deprovision":
-            if self.is_provisioned:
-                if not self.deprovision():
-                    print("Error: deprovision.sh returned {}".format(returnCode))
-                    self.ws.write_message(json_encode({"status": "deprovision-failed"}))
-                    return
-            self.ws.write_message(json_encode({"status": "is-deprovisioned"}))
-        elif state == "update-expiration":
-            with open(self.profile["timestamp_file"], "w") as fout:
-                fout.write(str(int(data["expiration"])))
 
-        return
+        if not msg_type:
+            return
+        elif msg_type == 'restart':
+            print("Got restart request for {}".format(params))
+            # TODO find this device and send it a studown command
+            self.deprovision(params)
 
-    def provision(self, ssh, web, web_ro):
-        self.ssh = ssh
-        self.web = web
-        self.web_ro = web_ro
-        self.ws.write_message(
-            json_encode(
-                {
-                    "state": "is-provisioned",
-                    "ssh": self.ssh,
-                    "web": self.web,
-                    "web_ro": self.web_ro,
-                }
-            )
+
+    def deprovision(self, device):
+        p = subprocess(
+            ["tmate", "-S", os.path.join("/tmp/devices/", device, "{}.sock".format(device)), "wait", "tmate-ready"],
+            stdout = subprocess.STREAM,
+            stderr = subprocess.STREAM
         )
-
-    def deprovision(self):
-        """
-        TODO: use this to kill a session
-        """
-        pass
-
-
-class New_Session_Handler(pyinotify.ProcessEvent):
-    sock_re = re.compile(r"^tmate(\d+).sock$")
-
-    def my_init(self, client=None):
-        """
-        DO NOT OVERRIDE __init__() USE THIS FUNCTION INSTEAD
-        """
-        self.client = client
-
-    def process_IN_CREATE(self, event):
-        """
-        This will handle reading in the new session information and sending it back to the server
-        """
-        match = self.sock_re.match(os.path.basename(event.pathname))
-        check = device_re.match(os.path.dirname(event.pathname)) # used to make sure the right sock got made in the right folder
-        if match and check and match.group(1) == check.group(1):
-            print("A new tmate socket got created!")
-
-            try:
-                p = subprocess.Popen(
-                    ["tmate", "-S", event.pathname, "wait", "tmate-ready"]
-                ).communicate(timeout=5)
-            except Exception as e:
-                print("Couldn't wait: {}".format(e))
-                self.client.provision(None, None, None)
-                return
-
-            # Get the ssh info
-            p = subprocess.Popen(
-                ["tmate", "-S", event.pathname, "display", "-p", r"#{tmate_ssh}"],
-                stdout=subprocess.PIPE,
-            )
-            ssh_info = p.communicate()[0].decode()
-
-            # Get the web info
-            p = subprocess.Popen(
-                ["tmate", "-S", event.pathname, "display", "-p", r"#{tmate_web}"],
-                stdout=subprocess.PIPE,
-            )
-            web_info = p.communicate()[0].decode()
-
-            # Get the web_ro info
-            p = subprocess.Popen(
-                ["tmate", "-S", event.pathname, "display", "-p", r"#{tmate_web_ro}"],
-                stdout=subprocess.PIPE,
-            )
-            web_ro_info = p.communicate()[0].decode()
-
-            # TODO: Connect and talk to the server
-
+        try:
+            await p.wait_for_exit()
+        except Exception:
+            return False
+        return True
 
 class New_Device_Handler(pyinotify.ProcessEvent):
     def my_init(self, profiles={}):
@@ -198,21 +118,7 @@ async def register_device(path, profiles):
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
             print("Registering new Client: {}".format(profile_name))
-            newClient = Client("wss://virtual.carhackingvillage.com")
-            await newClient.connect(
-                clientProfile["username"], clientProfile["password"]
-            )
-
-            ACTIVE_CLIENTS[profile_name] = newClient
-            watch_manager = pyinotify.WatchManager()
-
-            pyinotify.TornadoAsyncNotifier(
-                watch_manager,
-                IOLoop.current(),
-                default_proc_fun=New_Session_Handler(client=newClient),
-            )
-
-            watch_manager.add_watch(path, pyinotify.IN_CREATE)
+            
 
 
 async def main():
@@ -221,7 +127,12 @@ async def main():
 
     profiles = get_profiles()
 
-    # Create the watcher loop
+    newClient = Client("wss://virtual.carhackingvillage.com")
+    await newClient.connect(
+        profiles['controller']["username"], profiles['controller']["password"]
+    )
+
+    # Create the watch manager
     watch_manager = pyinotify.WatchManager()
 
     # TODO do we need event_notifier?
@@ -235,7 +146,7 @@ async def main():
         if os.path.isdir(full_path):
             await register_device(full_path, profiles)
 
-    event_notifier.stop()
+    # event_notifier.stop()
 
 
 if __name__ == "__main__":
