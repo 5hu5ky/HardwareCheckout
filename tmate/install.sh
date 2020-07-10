@@ -14,7 +14,7 @@ sudo adduser --disabled-password --gecos "" $UNAME --shell /bin/bash
 ###Add villager to dialout group###
 sudo usermod -a -G dialout $UNAME
 
-su $UNAME -c cat <<"EOF" >> /home/$UNAME/.bashrc
+cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 
 
 echo "  
