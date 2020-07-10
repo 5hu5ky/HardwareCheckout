@@ -124,7 +124,7 @@ async def register_device(path, client, profiles):
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
             print("Registering new Client: {}".format(profile_name))
-            client
+            client.register_device(profile_name)
             
 
 
@@ -142,7 +142,7 @@ async def main():
 
     # TODO do we need event_notifier?
     event_notifier = pyinotify.TornadoAsyncNotifier(
-        watch_manager, IOLoop.current(), New_Device_Handler(profiles=profiles)
+        watch_manager, IOLoop.current(), New_Device_Handler(newClient, profiles=profiles)
     )
     watch_manager.add_watch("/tmp/devices", pyinotify.IN_CREATE)
 
