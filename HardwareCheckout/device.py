@@ -165,7 +165,7 @@ class DeviceStateHandler(UserBaseHandler):
                 .first
             )
             if next_user:
-                await as_future(partial(session.delete, (next_user,)))
+                session.delete(next_user)
                 return await DeviceStateHandler.device_in_queue(
                     deviceID, next_user.userId
                 )
@@ -173,7 +173,7 @@ class DeviceStateHandler(UserBaseHandler):
     @staticmethod
     async def device_in_queue(deviceID, next_user):
         with make_session() as session:
-            device = as_future(session.query(DeviceQueue).filter_by(id=deviceID).first)
+            device = await as_future(session.query(DeviceQueue).filter_by(id=deviceID).first)
             device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
             device.owner = next_user
             session.add(device)
