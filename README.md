@@ -136,4 +136,4 @@ The server will come up on `https://127.0.0.1`
 
 
 ### Hardware setup
-- `./tmate/install.sh <hostname or ip of server>`
+- `./tmate/install.sh <hostname or ip of server> <name of this device>`
