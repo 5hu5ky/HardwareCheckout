@@ -49,21 +49,40 @@ sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -C "$UNAME@$HOST
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
-pip3 install -r $SCRIPTPATH/requirements.txt
+pip3 install virtualenv
 
-if [ -f $SCRIPTPATH/device.py.bak ]; then
-    mv $SCRIPTPATH/device.py.bak $SCRIPTPATH/device.py
+# TODO install tmate 2.4.0 for the correct arch not just arm64
+wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev.null
+tar xf tmate-2.4.0-static-linux-arm64v8.tar.xz
+mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
+
+# Set-up the virtual environment as the villager user?
+sudo -u $UNAME -s <<EOF
+if [ ! -d "$$SCRIPTPATH/venv" ]; then
+  python3 -m virtualenv $APP_PATH/venv
 fi
-if [ -f $SCRIPTPATH/connected.py.bak ]; then
-    mv $SCRIPTPATH/connected.py.bak $SCRIPTPATH/connected.py
+source $SCRIPTPATH/venv/bin/activate
+$SCRIPTPATH/venv/bin/pip3 install -r $APP_PATH/requirements.txt
+deactivate
+EOF
+
+
+if [ -f $SCRIPTPATH/controller.py.bak ]; then
+    mv $SCRIPTPATH/controller.py.bak $SCRIPTPATH/controller.py
+fi
+if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
+    mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
 fi
 
-sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/device.py
-sed -i.bak "s|localhost:5000|$1|g" $SCRIPTPATH/connected.py
+sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/controller.py
+sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/.tmate.conf
 
-sudo install -m 755 -d /opt/hc-client
-sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
-sudo install -m 644 $SCRIPTPATH/{session.target,session@.service} /etc/systemd/system
+sudo install -m 755 $SCRIPTPATH/controller.py /opt/hc-client
+sudo install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
+sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system
+
+#Make .bashrc immutable
+chattr +i /home/$UNAME/.bashrc
 
 sudo $SCRIPTPATH/create_config.py $2 6
 
