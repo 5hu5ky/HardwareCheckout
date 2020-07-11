@@ -33,7 +33,7 @@ from werkzeug.security import check_password_hash
 
 from .models import DeviceQueue, DeviceType, UserQueue, User
 from .webutil import Blueprint, UserBaseHandler, DeviceWSHandler, Timer, make_session
-from .queue import QueueWSHandler, on_user_assigned_device
+from .queue import QueueWSHandler, on_user_assigned_device, on_user_deallocated_device
 
 device = Blueprint()
 
@@ -205,10 +205,13 @@ class DeviceStateHandler(UserBaseHandler):
 
     @staticmethod
     async def return_device(deviceID):
-        raise NotImplementedError("TODO: how?")
+        await ControllerHandler.restart_device(deviceID)
+        with make_session() as session:
+            userID = await as_future(
+                session.query(DeviceQueue.owner).filter_by(id=deviceID).one
+            )
+        on_user_deallocated_device(userID, deviceID, "queue_timeout")
         
-        # await DeviceStateHandler.deprovision_device(deviceID)
-        # await DeviceStateHandler.send_message_to_owner(device, 'device_lost')
 
     @staticmethod
     async def device_in_use(deviceID):

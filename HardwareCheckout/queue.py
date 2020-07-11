@@ -11,8 +11,13 @@ queue = Blueprint()
 
 def on_user_assigned_device(userId, device):
     # TODO: set timer
-    device_info = {'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
+    device_info = {'id':device.id,'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
     message = {'type': 'new_device', 'device': device_info}
+    return QueueWSHandler.waiters[userId].send(message)
+
+def on_user_deallocated_device(userId, deviceID, reason="normal"):
+    device_info = {'id':deviceID}
+    message = {'type': 'rm_device', 'device': device_info, 'reason':reason}
     return QueueWSHandler.waiters[userId].send(message)
 
 @event.listens_for(UserQueue, 'after_delete')

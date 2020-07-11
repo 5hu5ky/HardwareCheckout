@@ -22,7 +22,7 @@ var updater = {
 
     renderDeviceInfo: function (device) {
         return "<li id=\"device_" +
-            updater.escapeAttribute(device.name) + "\">" +
+            updater.escapeAttribute(device.id) + "\">" +
             updater.escapeHTML(device.name) + "<ul><li>SSH: " +
             updater.escapeHTML(device.sshAddr) + "</li><li>Web: <a href=\"" +
             updater.escapeAttribute(device.webUrl) + "\">" +
@@ -52,7 +52,7 @@ var updater = {
             } else if (msg.type == "all_devices") {
                 document.getElementById("devices").innerHTML = updater.renderDevices(msg.devices);
             } else if (msg.type == "rm_device") {
-                document.getElementById("device_" + msg.device.name).remove();
+                document.getElementById("device_" + msg.device.id).remove();
                 if (msg.reason == "queue_timeout") {
                     updater.notify("Your login time for device " + msg.device + " has expired. You may re-enter the queue to try again.");
                 } else if (msg.reason == "normal") {
