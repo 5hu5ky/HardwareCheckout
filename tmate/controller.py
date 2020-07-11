@@ -145,7 +145,7 @@ async def main():
 
     profiles = get_profiles()
 
-    newClient = Client("wss://virtual.carhackingvillage.com/device/controller", profiles['controller']["username"], profiles['controller']["password"])
+    newClient = Client("wss://localhost:8080/device/controller", profiles['controller']["username"], profiles['controller']["password"])
     await newClient.connect()
 
     # Create the watch manager
