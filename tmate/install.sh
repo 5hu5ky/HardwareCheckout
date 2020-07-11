@@ -52,9 +52,13 @@ SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
 
 # TODO install tmate 2.4.0 for the correct arch not just arm64
-wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev/null
-tar xf tmate-2.4.0-static-linux-arm64v8.tar.xz
-mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
+#wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev/null
+#tar xf tmate-2.4.0-static-linux-arm64v8.tar.xz
+#mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
+# 32 bit version
+wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm32v7.tar.xz' 1>/dev/null
+tar xf tmate-2.4.0-static-linux-arm32v7.tar.xz
+mv tmate-2.4.0-static-linux-arm32v7/tmate /usr/bin
 
 # Set-up the virtual environment as the villager user?
 sudo -u $UNAME -s -H <<EOF
