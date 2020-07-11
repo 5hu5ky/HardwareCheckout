@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 UNAME=villager
+APP_PATH=/opt/hc-client
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <URL> <Device Name>"
@@ -58,11 +59,11 @@ mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
 # Set-up the virtual environment as the villager user?
 sudo -u $UNAME -s -H <<EOF
 pip3 install virtualenv
-if [ ! -d "$SCRIPTPATH/venv" ]; then
-  python3 -m virtualenv $SCRIPTPATH/venv
+if [ ! -d "$APP_PATH/venv" ]; then
+  python3 -m virtualenv $APP_PATH/venv
 fi
-source $SCRIPTPATH/venv/bin/activate
-$SCRIPTPATH/venv/bin/pip3 install -r $SCRIPTPATH/requirements.txt
+source $APP_PATH/venv/bin/activate
+pip3 install -r $SCRIPTPATH/requirements.txt
 deactivate
 EOF
 
