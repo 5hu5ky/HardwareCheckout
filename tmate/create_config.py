@@ -18,15 +18,20 @@ try:
 except Exception:
     pass
 
+config = configparser.ConfigParser()
 for i in range(args.count):
     name = "device{}".format(i)
+    username = "{}-{}".format(args.prefix, name)
     password = gen_password()
     path = "/root/device{}".format(i)
+    config[name]={
+        "username":username,
+        "password":password
+    }
     with open(path, 'w') as fout:
-        fout.write("AUTH={}\n".format(b64encode("{}-{}={}".format(args.prefix, name, password).encode()).decode()))
+        fout.write("AUTH={}\n".format(b64encode("{}={}".format(username, password).encode()).decode()))
     chmod(path, 0o600)
 
-config = configparser.ConfigParser()
 config["controller"] = {
     "username": "{}-controller".format(args.prefix),
     "password": gen_password(),
