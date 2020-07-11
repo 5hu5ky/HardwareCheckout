@@ -20,18 +20,29 @@ var updater = {
     escapeAttribute: attr => attr.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/\xA0/g, "&nbsp;"),
     escapeHTML: html => html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\xA0/g, "&nbsp;"),
 
-    renderDeviceInfo: function (device) {
-        return "<li id=\"device_" +
-            updater.escapeAttribute(device.id) + "\">" +
-            updater.escapeHTML(device.name) + "<ul><li>SSH: " +
-            updater.escapeHTML(device.sshAddr) + "</li><li>Web: <a href=\"" +
-            updater.escapeAttribute(device.webUrl) + "\">" +
-            updater.escapeHTML(device.webUrl) + "</a></li></ul></li>";
-    },
+        renderDeviceInfo: function (device) {
+        return "<div class='available-device' id='" + updater.escapeAttribute(device.id) + "'>" +
+            "<div class='available-device-header'>" +
+            "    <div class='available-device-header--corner'></div>" +
+            "  <div class='available-device-header--name'>" + updater.escapeHTML(device.name) + "</div>" +
+            "</div>" +
+            "<div class='available-device-content'>" +
+            "    <div>" +
+            "      <div>Your device is ready!  Connect to it using:</div>" +
+            "      <div class='tab-space'>$" + updater.escapeHTML(device.sshAddr) + "</div>" +
+            "      <br>" +
+            "      <div>Or visit it at <a href='" + updater.escapeAttribute(device.webUrl) + "'>" + updater.escapeHTML(device.webUrl) + "</a></div>" +
+            "    </div>" +
+            "    <div>Check out the tutorial <a href='https://www.carhackingvillage.com/getting-started'>here</a>.</div>" +
+            "</div>" +
+            "</div>"
+    }
 
     renderDevices: function (devices) {
-        return "<h6>Devices available:</h6><ul>" +
-            devices.map(updater.renderDeviceInfo).join("") + "</ul>";
+        return "<div class='section-header'>Devices available</div>" +
+            "<div class='available-devices--row'>" +
+            devices.map(updater.renderDeviceInfo).join("") +
+            "</div>";
     },
 
     start: function() {
@@ -81,3 +92,4 @@ var updater = {
 };
 
 updater.start();
+
