@@ -23,7 +23,7 @@ for i in range(args.count):
     password = gen_password()
     path = "/root/device{}".format(i)
     with open(path, 'w') as fout:
-        fout.write("AUTH={}\n".format(b64encode("{}-{}={}".format(args.prefix, name, password))))
+        fout.write("AUTH={}\n".format(b64encode("{}-{}={}".format(args.prefix, name, password).encode())))
     chmod(path, 0o600)
 
 config = configparser.ConfigParser()
