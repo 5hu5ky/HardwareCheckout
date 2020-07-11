@@ -1,0 +1,12 @@
+[Unit]
+Description=Watching for tmate stop commands
+PartOf=workers.target
+
+[Service]
+User=root
+Type=simple
+ExecStart=/opt/hc-client/controller.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
