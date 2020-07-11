@@ -82,6 +82,7 @@ sudo install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
 sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system
 
 #Make .bashrc immutable
+echo -e "\nunset AUTH\n" >> /home/$UNAME/.bashrc
 chattr +i /home/$UNAME/.bashrc
 
 sudo $SCRIPTPATH/create_config.py $2 6
