@@ -29,7 +29,7 @@ for i in range(args.count):
         "password":password
     }
     with open(path, 'w') as fout:
-        fout.write("AUTH={}\n".format(b64encode("{}={}".format(username, password).encode())))
+        fout.write("AUTH={}\n".format(b64encode("{}={}".format(username, password).encode()).decode()))
     chmod(path, 0o600)
 
 config["controller"] = {
