@@ -20,7 +20,7 @@ var updater = {
     escapeAttribute: attr => attr.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/\xA0/g, "&nbsp;"),
     escapeHTML: html => html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\xA0/g, "&nbsp;"),
 
-    renderDeviceInfo: function (device) {
+        renderDeviceInfo: function (device) {
         return "<div class='available-device' id='" + updater.escapeAttribute(device.id) + "'>" +
             "<div class='available-device-header'>" +
             "    <div class='available-device-header--corner'></div>" +

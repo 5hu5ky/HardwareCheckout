@@ -5,7 +5,8 @@ PartOf=workers.target
 [Service]
 User=villager
 Type=simple
-ExecStart=/usr/bin/env python3 /opt/hc-client/device.py %i
+ExecStart=/usr/bin/tmate -F -S /tmp/devices/%i/%i.sock new-session
+EnvironmentFile=/root/%i
 Restart=on-failure
 
 [Install]

@@ -9,6 +9,7 @@
 {% block content %}
     <div class="container">
         <div id="devices" class="content">
+        {% if devices %}
             <div class="section-header">Devices available</div>
             <div class="available-devices--row">
                 {% for device in devices %}
@@ -27,12 +28,16 @@
                         <div>Check out the tutorial <a href="https://www.carhackingvillage.com/getting-started">here</a>.</div>
                     </div>
                 </div>
-                    <!-- <div class="not-found">No devices found</div>  -->
                 {% end %}
+        {% else %}
+          	<div class="not-found">No devices found</div>
+        {% endif %}
             </div>
         </div>
+        
         <div class="breaker-line"></div>
         <div class="content">
+        {% if queues %}
             <div class="section-header">Join device queue</div>
             <div class="device-queue--row">
                 {% for queue in queues %}
@@ -50,8 +55,11 @@
                         </form>
                     </div>
                 </div>
-	        <!-- <div class="not-found">No queues found.</div> --> 
+	       
                 {% end %}
+        {% else %}
+            <div class="not-found">No queues found.</div> 
+        {% endif %}
             </div>
         </div>
 
