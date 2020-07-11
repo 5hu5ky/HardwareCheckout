@@ -21,22 +21,38 @@ var updater = {
     escapeHTML: html => html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\xA0/g, "&nbsp;"),
 
     renderDeviceInfo: function (device) {
-        return "<li id=\"device_" +
-            updater.escapeAttribute(device.name) + "\">" +
-            updater.escapeHTML(device.name) + "<ul><li>SSH: " +
-            updater.escapeHTML(device.sshAddr) + "</li><li>Web: <a href=\"" +
-            updater.escapeAttribute(device.webUrl) + "\">" +
-            updater.escapeHTML(device.webUrl) + "</a></li></ul></li>";
-    },
+        return "<div class='available-device' id='" + updater.escapeAttribute(device.id) + "'>" +
+            "<div class='available-device-header'>" +
+            "    <div class='available-device-header--corner'></div>" +
+            "  <div class='available-device-header--name'>" + updater.escapeHTML(device.name) + "</div>" +
+            "</div>" +
+            "<div class='available-device-content'>" +
+            "    <div>" +
+            "      <div>Your device is ready!  Connect to it using:</div>" +
+            "      <div class='tab-space'>$" + updater.escapeHTML(device.sshAddr) + "</div>" +
+            "      <br>" +
+            "      <div>Or visit it at <a href='" + updater.escapeAttribute(device.webUrl) + "'>" + updater.escapeHTML(device.webUrl) + "</a></div>" +
+            "    </div>" +
+            "    <div>Check out the tutorial <a href='https://www.carhackingvillage.com/getting-started'>here</a>.</div>" +
+            "</div>" +
+            "</div>"
+    }
 
     renderDevices: function (devices) {
-        return "<h6>Devices available:</h6><ul>" +
-            devices.map(updater.renderDeviceInfo).join("") + "</ul>";
+        return "<div class='section-header'>Devices available</div>" +
+            "<div class='available-devices--row'>" +
+            devices.map(updater.renderDeviceInfo).join("") +
+            "</div>";
     },
 
     start: function() {
-        // TODO change to wss
-        var url = "ws://" + location.host + "/queue/event";
+        if (window.location.protocol === 'https:') {
+            var websocket_proto = "wss://"
+        } else {
+            var websocket_proto = "ws://"
+        }
+
+        var url = websocket_proto + location.host + "/queue/event";
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
             console.log(event);
@@ -47,7 +63,7 @@ var updater = {
             } else if (msg.type == "all_devices") {
                 document.getElementById("devices").innerHTML = updater.renderDevices(msg.devices);
             } else if (msg.type == "rm_device") {
-                document.getElementById("device_" + msg.device.name).remove();
+                document.getElementById("device_" + msg.device.id).remove();
                 if (msg.reason == "queue_timeout") {
                     updater.notify("Your login time for device " + msg.device + " has expired. You may re-enter the queue to try again.");
                 } else if (msg.reason == "normal") {
@@ -76,3 +92,4 @@ var updater = {
 };
 
 updater.start();
+
