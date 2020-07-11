@@ -73,9 +73,14 @@ fi
 if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
     mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
 fi
-
 sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/controller.py
 sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/.tmate.conf
+
+# TODO: make the fun timer stuff in provision.sh work without needing to run it...
+
+# sudo install -m 755 -d /opt/hc-client
+# sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
+
 
 sudo install -m 755 $SCRIPTPATH/controller.py /opt/hc-client
 sudo install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
@@ -83,6 +88,8 @@ sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.serv
 
 #Make .bashrc immutable
 echo -e "\nunset AUTH\n" >> /home/$UNAME/.bashrc
+sudo chown root:root /home/$UNAME/.bashrc
+sudo chmod 755 /home/$UNAME/.bashrc
 chattr +i /home/$UNAME/.bashrc
 
 sudo $SCRIPTPATH/create_config.py $2 6

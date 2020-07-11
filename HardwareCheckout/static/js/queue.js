@@ -22,7 +22,7 @@ var updater = {
 
     renderDeviceInfo: function (device) {
         return "<li id=\"device_" +
-            updater.escapeAttribute(device.name) + "\">" +
+            updater.escapeAttribute(device.id) + "\">" +
             updater.escapeHTML(device.name) + "<ul><li>SSH: " +
             updater.escapeHTML(device.sshAddr) + "</li><li>Web: <a href=\"" +
             updater.escapeAttribute(device.webUrl) + "\">" +
@@ -35,8 +35,13 @@ var updater = {
     },
 
     start: function() {
-        // TODO change to wss
-        var url = "ws://" + location.host + "/queue/event";
+        if (window.location.protocol === 'https:') {
+            var websocket_proto = "wss://"
+        } else {
+            var websocket_proto = "ws://"
+        }
+
+        var url = websocket_proto + location.host + "/queue/event";
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
             console.log(event);
@@ -47,7 +52,7 @@ var updater = {
             } else if (msg.type == "all_devices") {
                 document.getElementById("devices").innerHTML = updater.renderDevices(msg.devices);
             } else if (msg.type == "rm_device") {
-                document.getElementById("device_" + msg.device.name).remove();
+                document.getElementById("device_" + msg.device.id).remove();
                 if (msg.reason == "queue_timeout") {
                     updater.notify("Your login time for device " + msg.device + " has expired. You may re-enter the queue to try again.");
                 } else if (msg.reason == "normal") {
