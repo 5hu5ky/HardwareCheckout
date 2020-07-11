@@ -200,7 +200,7 @@ class DeviceStateHandler(UserBaseHandler):
             userID = await as_future(
                 session.query(User.id).filter_by(id=next_user).first
             )
-            await on_user_assigned_device(userID, device)
+            on_user_assigned_device(userID, device)
 
     @staticmethod
     async def return_device(deviceID):
