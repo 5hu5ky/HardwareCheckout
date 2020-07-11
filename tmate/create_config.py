@@ -34,4 +34,4 @@ config["controller"] = {
 
 with open("/opt/hc-client/.config.ini", "w") as confout:
     config.write(confout)
-
+chmod("/opt/hc-client/.config.ini", 0o600)
