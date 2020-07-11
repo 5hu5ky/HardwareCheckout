@@ -1,6 +1,6 @@
 [Unit]
 Description=Session creation target
-Requires=session@device1.service session@device2.service session@device3.service session@device4.service session@device5.service session@device0.service
+Requires=controller.service session@device1.service session@device2.service session@device3.service session@device4.service session@device5.service session@device0.service
 
 [Install]
 WantedBy=multi-user.target
