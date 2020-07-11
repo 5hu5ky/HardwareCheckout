@@ -21,7 +21,7 @@
                     <div class="available-device-content">
                         <div>
                           <div>Your device is ready!  Connect to it using:</div>
-                          <div class="tab-space">$ssh user@{{ device['sshAddr'] }}</div>
+                          <div class="tab-space">$ssh {{ device['sshAddr'] }}</div>
                           <br>
                           <div>Or visit it at <a href="{{ device['webUrl'] }}">{{ device['webUrl'] }}</a></div>
                         </div>
