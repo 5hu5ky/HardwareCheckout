@@ -6,7 +6,7 @@ PartOf=workers.target
 User=villager
 Type=simple
 ExecStart=/usr/bin/tmate -F -S /tmp/devices/device%i/device%i.sock new-session
-EnvironmentFile=/root/device%i
+EnvironmentFile=/root/%i
 Restart=on-failure
 
 [Install]
