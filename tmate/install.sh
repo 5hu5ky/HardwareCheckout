@@ -49,7 +49,6 @@ sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -C "$UNAME@$HOST
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
-pip3 install virtualenv
 
 # TODO install tmate 2.4.0 for the correct arch not just arm64
 wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev.null
@@ -57,12 +56,13 @@ tar xf tmate-2.4.0-static-linux-arm64v8.tar.xz
 mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
 
 # Set-up the virtual environment as the villager user?
-sudo -u $UNAME -s <<EOF
-if [ ! -d "$$SCRIPTPATH/venv" ]; then
-  python3 -m virtualenv $APP_PATH/venv
+sudo -u $UNAME -s -H <<EOF
+pip3 install virtualenv
+if [ ! -d "$SCRIPTPATH/venv" ]; then
+  python3 -m virtualenv $SCRIPTPATH/venv
 fi
 source $SCRIPTPATH/venv/bin/activate
-$SCRIPTPATH/venv/bin/pip3 install -r $APP_PATH/requirements.txt
+$SCRIPTPATH/venv/bin/pip3 install -r $SCRIPTPATH/requirements.txt
 deactivate
 EOF
 
@@ -82,7 +82,7 @@ sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/.tmate.conf
 # sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
 
 
-sudo install -m 755 $SCRIPTPATH/controller.py /opt/hc-client
+sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH
 sudo install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
 sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system
 
