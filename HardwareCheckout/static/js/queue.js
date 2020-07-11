@@ -35,8 +35,13 @@ var updater = {
     },
 
     start: function() {
-        // TODO change to wss
-        var url = "ws://" + location.host + "/queue/event";
+        if (window.location.protocol === 'https:') {
+            var websocket_proto = "wss://"
+        } else {
+            var websocket_proto = "ws://"
+        }
+
+        var url = websocket_proto + location.host + "/queue/event";
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
             console.log(event);
