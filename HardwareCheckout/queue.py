@@ -47,7 +47,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
             # and a device was assigned in the meantime
             with self.make_session() as session:
                 devices = await self.current_user.get_owned_devices_async(session)
-                devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
+                devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2], "id":a[3]} for a in devices]
                 self.write_message({'type': 'all_devices', 'devices': devices})
         else:
             # support updating queue numbers even if not logged in
