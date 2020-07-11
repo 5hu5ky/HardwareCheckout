@@ -128,7 +128,7 @@ class WaiterBucket:
 
     def send(self, message):
         for waiter in self.bucket:
-            waiter.on_sent(message)
+            waiter.send(message)
 
 
 class Timer():
