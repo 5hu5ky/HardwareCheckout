@@ -170,6 +170,7 @@ class DeviceStateHandler(UserBaseHandler):
                     deviceID, next_user.userId
                 )
 
+
     @staticmethod
     async def device_in_queue(deviceID, next_user):
         with make_session() as session:
@@ -199,7 +200,7 @@ class DeviceStateHandler(UserBaseHandler):
             )
             userID = await as_future(
                 session.query(User.id).filter_by(id=next_user).first
-            )
+            )[0]
             on_user_assigned_device(userID, device)
 
     @staticmethod
