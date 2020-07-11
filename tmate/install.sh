@@ -52,7 +52,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
 
 # TODO install tmate 2.4.0 for the correct arch not just arm64
-wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev.null
+wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev/null
 tar xf tmate-2.4.0-static-linux-arm64v8.tar.xz
 mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
 
@@ -75,7 +75,7 @@ if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
     mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
 fi
 sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/controller.py
-sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/.tmate.conf
+sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 
 # TODO: make the fun timer stuff in provision.sh work without needing to run it...
 
