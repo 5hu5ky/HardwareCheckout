@@ -27,7 +27,7 @@ class User(db.Model):
 
     def get_owned_devices(self, session):
         return session.query(
-            DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl
+            DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl, DeviceQueue.id
         ).filter(
             or_(DeviceQueue.state == "in-queue", DeviceQueue.state == "in-use"),
             DeviceQueue.owner == self.id,
@@ -120,11 +120,12 @@ class DeviceQueue(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(200), unique=True)
     password = Column(String(93), unique=True)
+    entity_id = Column(String(200), unique=True)
     sshAddr = Column(String(200))
     webUrl = Column(String(200))
     roUrl = Column(String(200))
-    state = Column(String(200))
-    expiration = Column(DateTime)
+    state = Column(String(200)) # TODO do we need this now?
+    # expiration = Column(DateTime) # TODO this should be replaced be scheduling callbacks
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
     type_obj = relationship("DeviceType")
