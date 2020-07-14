@@ -1,17 +1,3 @@
-// function newMessage(form) {
-//     var message = form.formToDict();
-//     updater.socket.send(JSON.stringify(message));
-//     form.find("input[type=text]").val("").select();
-// }
-// jQuery.fn.formToDict = function() {
-//     var fields = this.serializeArray();
-//     var json = {}
-//     for (var i = 0; i < fields.length; i++) {
-//         json[fields[i].name] = fields[i].value;
-//     }
-//     if (json.next) delete json.next;
-//     return json;
-// };
 var updater = {
     socket: null,
     escapeAttribute: attr => attr.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/\xA0/g, "&nbsp;"),
