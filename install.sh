@@ -148,6 +148,9 @@ Restart=on-failure
 Environment=TORNADO_SECRET_KEY=$TDSK
 WorkingDirectory=$APP_PATH
 ExecStart=$APP_PATH/venv/bin/python3 -m HardwareCheckout
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
