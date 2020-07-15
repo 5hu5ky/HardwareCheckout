@@ -68,15 +68,15 @@
                 {% end %}
             </div>
         {% else %}
-        <div class="section-header">Devices available</div>
-        <div class="available-devices--row">
-          {% if not current_user %}
-              <div class="not-found">Please login to view available queues. </div>
-          {% end %}
+        <div class="section-header">Join device queue</div>
+        <div class="device-queue--row">
+	  {% if not current_user %}
+	      <div class="not-found">Please login to view available queues. </div>
+	  {% end %}
 
-          {% if current_user %}
-              <div class="not-found">No queues found.</div>
-          {% end %}
+	  {% if current_user %}
+	      <div class="not-found">No queues found.</div>
+	  {% end %}
         </div>
         {% end %}
 
