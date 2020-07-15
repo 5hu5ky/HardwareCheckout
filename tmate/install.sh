@@ -2,6 +2,23 @@
 
 UNAME=villager
 APP_PATH=/opt/hc-client
+TMATEURL=https://github.com/tmate-io/tmate/releases/download/2.4.0/
+TMATE64=tmate-2.4.0-static-linux-arm64v8.tar.xz
+TMATE32=tmate-2.4.0-static-linux-arm32v7.tar.xz
+
+architecture=""
+case $(uname -m) in
+    i386)   architecture="386" ;;
+    i686)   architecture="386" ;;
+    x86_64) architecture="amd64" ;;
+    arm)    dpkg --print-architecture | grep -q "arm64" && architecture="arm64" || architecture="arm" ;;
+esac
+
+
+if [[ $architecture -eq "386" ]] || [[ $architecture -eq  "amd64" ]]; then
+echo "This is not an arm chipset... Bye bye!"
+exit 1
+fi
 
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <URL> <Device Name>"
@@ -14,6 +31,13 @@ sudo adduser --disabled-password --gecos "" $UNAME --shell /bin/bash
 
 ###Add villager to dialout group###
 sudo usermod -a -G dialout $UNAME
+
+
+#Check if we installed before...
+grep -q '617-440-8667' '/home/$UNAME/.bashrc'
+REINSTALL=$?
+
+if [[ "$REINSTALL" -eq 1 ]]; then
 
 cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 
@@ -42,6 +66,7 @@ echo "
 "
 EOF
 
+fi
 
 ###Generate a strong ssh key###
 sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -C "$UNAME@$HOSTNAME"
@@ -51,14 +76,17 @@ sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -C "$UNAME@$HOST
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
 
-# TODO install tmate 2.4.0 for the correct arch not just arm64
-#wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm64v8.tar.xz' 1>/dev/null
-#tar xf tmate-2.4.0-static-linux-arm64v8.tar.xz
-#mv tmate-2.4.0-static-linux-arm64v8/tmate /usr/bin
-# 32 bit version
-wget 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-arm32v7.tar.xz' 1>/dev/null
-tar xf tmate-2.4.0-static-linux-arm32v7.tar.xz
-mv tmate-2.4.0-static-linux-arm32v7/tmate /usr/bin
+
+if [[ $architecture -eq "arm64" ]]; then
+TMATE=$TMATE64
+else
+TMATE=$TMATE32
+fi
+
+wget $TMATEURL$TMATE 1>/dev/null
+tar xf $TMATE
+mv $(basename $TMATE .tar.xz)/tmate /usr/bin
+
 
 # Set-up the virtual environment as the villager user?
 sudo -u $UNAME -s -H <<EOF
@@ -93,8 +121,6 @@ sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.serv
 
 #Make .bashrc immutable
 echo -e "\nunset AUTH\n" >> /home/$UNAME/.bashrc
-sudo chown root:root /home/$UNAME/.bashrc
-sudo chmod 755 /home/$UNAME/.bashrc
 chattr +i /home/$UNAME/.bashrc
 
 sudo $SCRIPTPATH/create_config.py $2 6
