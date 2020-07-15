@@ -6,6 +6,20 @@ TMATEURL=https://github.com/tmate-io/tmate/releases/download/2.4.0/
 TMATE64=tmate-2.4.0-static-linux-arm64v8.tar.xz
 TMATE32=tmate-2.4.0-static-linux-arm32v7.tar.xz
 
+architecture=""
+case $(uname -m) in
+    i386)   architecture="386" ;;
+    i686)   architecture="386" ;;
+    x86_64) architecture="amd64" ;;
+    arm)    dpkg --print-architecture | grep -q "arm64" && architecture="arm64" || architecture="arm" ;;
+esac
+
+
+if [[ $architecture -eq "386" ]] || [[ $architecture -eq  "amd64" ]]; then
+echo "This is not an arm chipset... Bye bye!"
+exit 1
+fi
+
 if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <URL> <Device Name>"
     exit 1
@@ -63,7 +77,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 apt-get install -y python3-pip
 
 
-if [[ $(getconf LONG_BIT) -eq "64" ]]; then
+if [[ $architecture -eq "arm64" ]]; then
 TMATE=$TMATE64
 else
 TMATE=$TMATE32
