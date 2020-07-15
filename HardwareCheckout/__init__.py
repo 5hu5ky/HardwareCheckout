@@ -44,7 +44,7 @@ def create_app():
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
         template_path="HardwareCheckout/templates/",
         static_path="HardwareCheckout/static/",
-        db=SQLAlchemy(url=db_path),
+        db=SQLAlchemy(url=db_path, engine_options={"pool_size":0}),
         # xsrf_cookies=True,  #TODO
         websocket_ping_interval=10000,
         websocket_ping_timeout=30000,
