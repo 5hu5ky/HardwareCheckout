@@ -29,12 +29,21 @@
                     </div>
                 </div>
                 {% end %}
-        {% else %}
-          	<div class="not-found">No devices found</div>
-        {% endif %}
             </div>
+        {% else %}
+            <div class="section-header">Devices available</div>
+            <div class="available-devices--row">
+              {% if not current_user %}
+                  <div class="not-found">Please login to view available devices.  </div>
+              {% end %}
+
+              {% if current_user %}
+                  <div class="not-found">No devices found</div>
+              {% end %}
+            </div>
+        {% end %}
         </div>
-        
+
         <div class="breaker-line"></div>
         <div class="content">
         {% if queues %}
@@ -55,12 +64,22 @@
                         </form>
                     </div>
                 </div>
-	       
+
                 {% end %}
-        {% else %}
-            <div class="not-found">No queues found.</div> 
-        {% endif %}
             </div>
+        {% else %}
+        <div class="section-header">Devices available</div>
+        <div class="available-devices--row">
+          {% if not current_user %}
+              <div class="not-found">Please login to view available queues. </div>
+          {% end %}
+
+          {% if current_user %}
+              <div class="not-found">No queues found.</div>
+          {% end %}
+        </div>
+        {% end %}
+
         </div>
 
         <div class="breaker-line"></div>
@@ -108,3 +127,4 @@
 
 </script>
 {% end %}
+
