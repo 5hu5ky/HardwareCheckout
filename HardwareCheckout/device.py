@@ -63,7 +63,7 @@ class DeviceStateHandler(UserBaseHandler):
         entity = data.get("entity_id", None)
         user_data = data.get("userdata", None)
         params = data.get("params", None)
-        if not message_type or not entity or not user_data or not params:
+        if None in [message_type, entity, user_data, params]:
             return
 
         if message_type == "session_register":
