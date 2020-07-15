@@ -10,6 +10,7 @@ from .auth import auth as auth_blueprint
 from .terminals import terms as terminal_blueprint
 from .queue import queue as queue_blueprint
 from .device import device as device_blueprint
+from .models import db
 
 # init SQLAlchemy so we can use it later in our models
 
@@ -44,7 +45,7 @@ def create_app():
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
         template_path="HardwareCheckout/templates/",
         static_path="HardwareCheckout/static/",
-        db=SQLAlchemy(url=db_path),
+        db=db,
         # xsrf_cookies=True,  #TODO
         websocket_ping_interval=10000,
         websocket_ping_timeout=30000,

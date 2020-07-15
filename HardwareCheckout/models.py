@@ -7,7 +7,7 @@ from .config import db_path
 from tornado_sqlalchemy import SQLAlchemy, as_future
 from functools import partial
 
-db = SQLAlchemy(url=db_path)
+db = SQLAlchemy(url=db_path, engine_options={"pool_size":0})
 
 
 class User(db.Model):
