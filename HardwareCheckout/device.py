@@ -106,6 +106,7 @@ class DeviceStateHandler(UserBaseHandler):
             device.webUrl = web_fmt % stoken
             device.roUrl = web_fmt % stoken_ro
             device.state = "provisioned"
+            device.entity_id = entity
             session.add(device)
 
             deviceID = device.id
@@ -129,7 +130,7 @@ class DeviceStateHandler(UserBaseHandler):
             if device.state != "in-use":
                 device.state = "in-use"
                 session.add(device)
-                self.device_in_use(device.id)
+                await self.device_in_use(device.id)
 
     async def handle_session_close(self, entity, user_data, params):
         # Technically there could be a race condition where the close message comes after the next start message.
