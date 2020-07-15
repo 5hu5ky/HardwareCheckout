@@ -148,6 +148,8 @@ class Timer():
         if self.__repeat:
             self.__timer = PeriodicCallback(self.__callback_wrapper, self.__timeout * 1000)
             self.__timer.start()
+        else:
+            self.__timer = IOLoop.current().call_later(self.__timeout, self.__callback_wrapper)
 
     def restart(self):
         if self.__timer is not None:
