@@ -167,6 +167,7 @@ class DeviceStateHandler(UserBaseHandler):
             )
             if next_user:
                 session.delete(next_user)
+                session.commit()
                 return await DeviceStateHandler.device_in_queue(
                     deviceID, next_user.userId
                 )
