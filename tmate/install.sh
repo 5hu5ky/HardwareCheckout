@@ -98,9 +98,7 @@ pip3 install --user virtualenv
 if [ ! -d "$APP_PATH/venv" ]; then
   python3 -m virtualenv $APP_PATH/venv
 fi
-source $APP_PATH/venv/bin/activate
-pip3 install -r $SCRIPTPATH/requirements.txt
-deactivate
+$APP_PATH/venv/bin/pip3 install -r $SCRIPTPATH/requirements.txt
 EOF
 
 
