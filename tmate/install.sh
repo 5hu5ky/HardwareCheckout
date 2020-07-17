@@ -35,7 +35,7 @@ exit 1
 fi
 
 if [[ $# -ne 2 ]]; then
-    echo "Usage: $0 <URL> <Device Name>"
+    echo "Usage: $0 <hostname>:<port> <Device Name>"
     exit 1
 fi
 
