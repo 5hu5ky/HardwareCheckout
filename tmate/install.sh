@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+HOSTNAME="$(hostname)"
 UNAME=villager
 APP_PATH=/opt/hc-client
 TMATEURL=https://github.com/tmate-io/tmate/releases/download/2.4.0/
