@@ -7,7 +7,7 @@ User=villager
 Type=simple
 ExecStartPre=/bin/mkdir -p /tmp/devices/%i
 ExecStart=/usr/bin/tmate -F -S /tmp/devices/%i/%i.sock new-session
-EnvironmentFile=/root/device%i
+EnvironmentFile=/root/%i
 Restart=on-failure
 
 [Install]
