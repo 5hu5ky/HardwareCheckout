@@ -90,9 +90,11 @@ tar xf $TMATE
 sudo mv $(basename $TMATE .tar.xz)/tmate /usr/bin/
 
 
-# Set-up the virtual environment as the villager user?
-sudo -u $UNAME -s -H <<EOF
-pip3 install virtualenv
+# Set-up the virtual environment as village user (TODO: controller user)
+sudo mkdir $APP_PATH
+sudo chown $UNAME $APP_PATH
+sudo -u $UNAME -s -H <<EOF || die "couldn't install python3 virtual env or requirements"
+pip3 install --user virtualenv
 if [ ! -d "$APP_PATH/venv" ]; then
   python3 -m virtualenv $APP_PATH/venv
 fi
