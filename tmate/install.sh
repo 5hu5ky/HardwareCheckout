@@ -113,7 +113,6 @@ sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 
 # TODO: make the fun timer stuff in provision.sh work without needing to run it...
 
-# sudo install -m 755 -d /opt/hc-client
 # sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
 
 
