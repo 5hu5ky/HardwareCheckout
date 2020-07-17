@@ -105,7 +105,7 @@ sudo bash -c "echo $TDSK >> $APP_PATH/$DBKEY"
 sudo bash -c "cat << EOF > '$APP_PATH'/run.sh
 export TORNADO_SECRET_KEY=$TDSK
 source $APP_PATH/venv/bin/activate
-python3 -m HardwareCheckout
+python3 -m HardwareCheckout --logging=info
 EOF"
 
 sudo chown -R $DBUNAME:$DBUNAME $APP_PATH
