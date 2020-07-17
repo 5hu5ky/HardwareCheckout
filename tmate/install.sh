@@ -43,26 +43,26 @@ if [[ "$REINSTALL" -eq 1 ]]; then
 cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 
 
-echo "  
+echo "
 
 
-        
+
                                       _.-=\"\"_-         _
                                  _.-=\"  \"_-           | ||\"\"\"\"\"\"\"-\"--_______     __..
-                     ___.===\"\"\"\"-.______-,,,,,,,,,,,,,-\\''----\" \"\"\"\"\"      \"\"\"\"\" \"_ 
+                     ___.===\"\"\"\"-.______-,,,,,,,,,,,,,-\\''----\" \"\"\"\"\"      \"\"\"\"\" \"_
               __.--\"\"     __        ,'                   o \\           __        [_|
          __-\"\"=======.--\"\"  \"\"--.=================================.--\"\"  \"\"--.=======:
         ]       [w] : /        \ : |== Welcome to the ======|    : /        \ :  [w] :
         V___________:|          |: |= Car Hacking Village ==|    :|          |:   _-
          V__________: \        / :_|=======================/_____: \        / :__-
-         -----------'  \"-____-\"  --------------------------------'  \"-____-\"
+         -----------'  \"-____-\"  ------------------------------'  \"-____-\"
 
 
 
         Welcome to the Car Hacking Village.  This is SUPER BETA!
         If you need help find us on the discord or slack or by phone at 617-440-8667
 	Please wait while we set things up for you to hack...
-	
+
 	**** PLEASE NOTE - TERMINTATING BASH WILL TERMINATE YOUR SESSION! DON'T CRY LATER!!!! ****
 "
 EOF
