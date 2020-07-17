@@ -48,7 +48,7 @@ sudo usermod -a -G dialout $UNAME
 
 
 #Check if we installed before...
-grep -q '617-440-8667' '/home/$UNAME/.bashrc'
+grep -q '617-440-8667' /home/$UNAME/.bashrc
 REINSTALL=$?
 
 if [[ "$REINSTALL" -eq 1 ]]; then
