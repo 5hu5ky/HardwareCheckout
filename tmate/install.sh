@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+function die(){
+    echo "$@" > /dev/stderr
+    exit 127
+}
+
+if test -z "$INIT"; then
+    INIT=systemd
+fi
+
 HOSTNAME="$(hostname)"
 UNAME=villager
 APP_PATH=/opt/hc-client
@@ -118,14 +127,29 @@ sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 
 sudo -u $UNAME install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
 sudo install -m 755 -d $SCRIPTPATH/controller.py $APP_PATH/
-sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system
+
+if [[ "${INIT}" == "systemd" ]]; then
+    sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system/ || die "couldn't install systemd stuff"
+fi
+
+if [[ "${INIT}" == "upstart" ]]; then
+    sudo install -m 644 $SCRIPTPATH/{session.conf,controller.conf} /etc/init/ || die "couldn't install upstart stuff"
+fi
 
 #Make .bashrc immutable
 echo -e "\nunset AUTH\n" >> /home/$UNAME/.bashrc
 chattr +i /home/$UNAME/.bashrc
 
 sudo $SCRIPTPATH/create_config.py $2 6
+if [[ "${INIT}" == "systemd" ]]; then
+    sudo systemctl daemon-reload || die "couldn't daemon-reload"
+    sudo systemctl start session.target || die "couldn't start session.target"
+    sudo systemctl enable session.target || die "couldn't enable session.target"
+fi
 
-sudo systemctl daemon-reload
-sudo systemctl start session.target
-sudo systemctl enable session.target
+if [[ "${INIT}" == "upstart" ]]; then
+    sudo initctl reload-configuration || die "couldn't reload upstart configs"
+    sudo initctl start session || die "couldn't start session"
+    sudo initctl start controller || die "couldn't start session"
+fi
+
