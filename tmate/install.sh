@@ -116,8 +116,8 @@ sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 # sudo install -m 755 $SCRIPTPATH/{connected.py,deprovision.sh,device.py,provision.sh} /opt/hc-client
 
 
-sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH
-sudo install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
+sudo -u $UNAME install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
+sudo install -m 755 -d $SCRIPTPATH/controller.py $APP_PATH/
 sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system
 
 #Make .bashrc immutable
