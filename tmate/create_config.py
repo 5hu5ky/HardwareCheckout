@@ -13,11 +13,6 @@ args = parser.parse_args()
 def gen_password():
     return uuid4()
 
-try:
-    mkdir("/tmp/devices/")
-except Exception:
-    pass
-
 config = configparser.ConfigParser()
 for i in range(args.count):
     name = "device{}".format(i)
