@@ -92,7 +92,7 @@ if ! which pip3; then
 fi
 
 
-if [[ $architecture -eq "arm64" ]]; then
+if [[ "${architecture}" == "arm64" ]]; then
 TMATE=$TMATE64
 else
 TMATE=$TMATE32
