@@ -142,8 +142,10 @@ if [[ "${INIT}" == "upstart" ]]; then
 fi
 
 #Make .bashrc immutable
+if ! grep -q "unset AUTH" /home/$UNAME/.bashrc; then
 echo -e "\nunset AUTH\n" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc
 sudo chattr +i /home/$UNAME/.bashrc
+fi
 
 sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
 
