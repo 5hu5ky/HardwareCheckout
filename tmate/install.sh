@@ -70,8 +70,7 @@ EOF
 fi
 
 ###Generate a strong ssh key###
-sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -C "$UNAME@$HOSTNAME"
-
+sudo -u $UNAME test -f /home/$UNAME/.ssh/id_rsa || sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f /home/$UNAME/.ssh/id_rsa -N "" -C "$UNAME@$HOSTNAME"
 
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
