@@ -87,7 +87,7 @@ fi
 
 wget $TMATEURL$TMATE 1>/dev/null
 tar xf $TMATE
-mv $(basename $TMATE .tar.xz)/tmate /usr/bin
+sudo mv $(basename $TMATE .tar.xz)/tmate /usr/bin/
 
 
 # Set-up the virtual environment as the villager user?
