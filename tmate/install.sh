@@ -133,14 +133,6 @@ sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 sudo -u $UNAME install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
 sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
 
-if [[ "${INIT}" == "systemd" ]]; then
-    sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system/ || die "couldn't install systemd stuff"
-fi
-
-if [[ "${INIT}" == "upstart" ]]; then
-    sudo install -m 644 $SCRIPTPATH/{session.conf,controller.conf} /etc/init/ || die "couldn't install upstart stuff"
-fi
-
 #Make .bashrc immutable
 if ! grep -q "unset AUTH" /home/$UNAME/.bashrc; then
 echo -e "\nunset AUTH\n" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc
@@ -150,12 +142,14 @@ fi
 sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
 
 if [[ "${INIT}" == "systemd" ]]; then
+    sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system/ || die "couldn't install systemd stuff"
     sudo systemctl daemon-reload || die "couldn't daemon-reload"
     sudo systemctl start session.target || die "couldn't start session.target"
     sudo systemctl enable session.target || die "couldn't enable session.target"
 fi
 
 if [[ "${INIT}" == "upstart" ]]; then
+    sudo install -m 644 $SCRIPTPATH/{session.conf,controller.conf} /etc/init/ || die "couldn't install upstart stuff"
     sudo initctl reload-configuration || die "couldn't reload upstart configs"
     sudo initctl start session || die "couldn't start session"
     sudo initctl start controller || die "couldn't start session"
