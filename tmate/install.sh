@@ -9,6 +9,10 @@ if test -z "$INIT"; then
     INIT=systemd
 fi
 
+if test -z "$NUM_SESSIONS"; then
+    NUM_SESSIONS=6
+fi
+
 HOSTNAME="$(hostname)"
 UNAME=villager
 APP_PATH=/opt/hc-client
@@ -140,7 +144,8 @@ fi
 echo -e "\nunset AUTH\n" >> /home/$UNAME/.bashrc
 chattr +i /home/$UNAME/.bashrc
 
-sudo $SCRIPTPATH/create_config.py $2 6
+sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
+
 if [[ "${INIT}" == "systemd" ]]; then
     sudo systemctl daemon-reload || die "couldn't daemon-reload"
     sudo systemctl start session.target || die "couldn't start session.target"
