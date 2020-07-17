@@ -74,7 +74,9 @@ sudo -u $UNAME test -f /home/$UNAME/.ssh/id_rsa || sudo -u $UNAME ssh-keygen -t 
 
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-apt-get install -y python3-pip
+if ! which pip3; then
+    sudo apt-get install -y python3-pip
+fi
 
 
 if [[ $architecture -eq "arm64" ]]; then
