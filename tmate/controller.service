@@ -5,6 +5,7 @@ PartOf=workers.target
 [Service]
 User=root
 Type=simple
+ExecStartPre=/bin/su villager -c "mkdir -p /tmp/devices"
 ExecStart=/opt/hc-client/venv/bin/python3 /opt/hc-client/controller.py
 Restart=on-failure
 

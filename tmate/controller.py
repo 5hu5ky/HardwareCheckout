@@ -140,9 +140,6 @@ async def register_device(path, client, profiles):
 
 
 async def main():
-    if not os.path.exists("/tmp/devices"):
-        os.mkdir("/tmp/devices")
-
     profiles = get_profiles()
 
     newClient = Client("wss://localhost:8080/device/controller", profiles['controller']["username"], profiles['controller']["password"])
