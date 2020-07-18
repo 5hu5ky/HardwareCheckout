@@ -142,7 +142,7 @@ The server will come up on `https://127.0.0.1`
 
 ## Hardware Setup (Raspberry Pi)
 Clone the repo on to your Rasberry Pi; under the tmate folder look for the `install.sh`
-- `./tmate/install.sh <hostname or ip of server>:<port> <name of this device>`
+- `./tmate/install.sh <hostname or ip of server>[:<port>] <name of this device>` (a `<port>` can be specified if the server uses a non-standard port)
 
 
 
