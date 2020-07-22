@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+<div>
+    {% if messages %}
+    <h1>{% messages %}</h1>
+    {% end %}
+    <h1>Add Device Type</h1>
+    <form method="POST" action="/admin">
+        <input type="text" name="name">
+        <input hidden name="type" value="addDeviceType">
+    </form>
+</div>
 {% end %}
