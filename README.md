@@ -73,6 +73,11 @@ cd /opt/HardwareCheckout
 
 Once the install is done the server will come up on - `http://127.0.0.1:8080`
 
+This is not a supported configuration. For `tmate` stuff to work you will need to
+
+* edit `controller.py` to use `ws://` instead of `wss://`
+* edit `.tmate.conf` to use `http://` instead of `https://`
+
 #### SSL setup
 
 You can quickly get going using Let's Encrypt; copy this into certbot-install.sh:
@@ -137,7 +142,7 @@ The server will come up on `https://127.0.0.1`
 
 ## Hardware Setup (Raspberry Pi)
 Clone the repo on to your Rasberry Pi; under the tmate folder look for the `install.sh`
-- `./tmate/install.sh <hostname or ip of server> <name of this device>`
+- `./tmate/install.sh <hostname or ip of server>[:<port>] <name of this device>` (a `<port>` can be specified if the server uses a non-standard port)
 
 
 

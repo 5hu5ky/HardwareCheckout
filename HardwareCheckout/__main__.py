@@ -1,8 +1,10 @@
 import tornado
+import tornado.options
 
 from . import create_app, create_redirect
 from .config import ssl_config
 
+tornado.options.parse_command_line()
 if not ssl_config['certfile'] or not ssl_config['keyfile']:
     app = create_app()
     app.listen(8080)
