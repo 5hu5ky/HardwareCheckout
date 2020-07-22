@@ -10,6 +10,7 @@ from .auth import auth as auth_blueprint
 from .terminals import terms as terminal_blueprint
 from .queue import queue as queue_blueprint
 from .device import device as device_blueprint
+from .admin import admin as admin_blueprint
 from .models import db
 
 # init SQLAlchemy so we can use it later in our models
@@ -39,7 +40,8 @@ def create_app():
             *(auth_blueprint.publish('/')),
             *(terminal_blueprint.publish('/')),
             *(queue_blueprint.publish('/queue')),
-            *(device_blueprint.publish('/device'))
+            *(device_blueprint.publish('/device')),
+            *(admin_blueprint.publish("/admin")),
         ],
         login_url="/login",
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
