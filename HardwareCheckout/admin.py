@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+from functools import partial
 
 from tornado.web import authenticated, MissingArgumentError
 from werkzeug.security import generate_password_hash
@@ -23,47 +24,56 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return self.render("admin.html", messages="Error in form submission")
 
+        errors = ''
         if req_type == "addDeviceType":
-            try:
-                name = self.get_argument("name")
-            except MissingArgumentError:
-                return self.render("admin.html", messages="Missing device type")
-            with self.make_session() as session:
-                session.add(DeviceType(name=name))
-                session.commit()
-            return
+            errors = await self.addDeviceType()
         elif req_type == "addDevice":
-            try:
-                file = self.request.files['config'][0]
-                device_type = self.get_argument("type")
-            except KeyError:
-                return self.render("admin.html", messages="Missing device config file")
+            errors = await self.addDevice()
+        
+        return self.render("admin.html", messages=errors)
 
-            config = ConfigParser()
-            try:
-                config.read_string(file['body'])
-            except KeyError:
-                return self.render("admin.html", messages="Error while trying to read the file")
-            
-            error_msg = ''
-            with self.make_session() as session:
-                device_type_id = await as_future(session.query(DeviceType.id).filter_by(name=device_type).one)[0]
+    async def addDeviceType(self):
+        try:
+            name = self.get_argument("name")
+        except MissingArgumentError:
+            return "Missing device type"
+        with self.make_session() as session:
+            await as_future(partial(session.add,DeviceType(name=name)))
+        return ''
 
-                for section in config.sections():
-                    try:
-                        session.add(
-                            DeviceQueue(
-                                name=config[section]['username'],
-                                password=generate_password_hash(
-                                    config[section]["password"], 
-                                    method="pbkdf2:sha256:45000"
-                                ),
-                                state="want-provision",
-                                type=device_type_id
-                            )
+    async def addDevice(self):
+        try:
+            file = self.request.files['config'][0]
+            device_type = self.get_argument("type")
+        except KeyError:
+            return "Missing device config file"
+
+        config = ConfigParser()
+        try:
+            config.read_string(file['body'])
+        except KeyError:
+            return "Error while trying to read the file"
+        
+        error_msg = ''
+        with self.make_session() as session:
+            device_type_id = await as_future(session.query(DeviceType.id).filter_by(name=device_type).one)[0]
+
+            for section in config.sections():
+                try:
+                    session.add(
+                        DeviceQueue(
+                            name=config[section]['username'],
+                            password=generate_password_hash(
+                                config[section]["password"], 
+                                method="pbkdf2:sha256:45000"
+                            ),
+                            state="want-provision",
+                            type=device_type_id
                         )
-                    except Exception as e:
-                        error_msg += str(e) + '\n'
-                        continue
-            
-            return self.render("admin.html", messages=error_msg)
+                    )
+                except Exception as e:
+                    error_msg += str(e) + '\n'
+                    continue
+
+        return error_msg
+        
