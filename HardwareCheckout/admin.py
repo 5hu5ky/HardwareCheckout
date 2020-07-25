@@ -8,6 +8,7 @@ from tornado_sqlalchemy import as_future
 from .models import DeviceQueue, Role, DeviceType, User
 from .webutil import Blueprint, UserBaseHandler
 from .auth import PASSWORD_CRYPTO_TYPE
+from .device import DeviceStateHandler
 
 admin = Blueprint()
 
@@ -36,6 +37,8 @@ class AdminHandler(UserBaseHandler):
             errors = await self.changeDevicePassword()
         elif req_type == "rmDevice":
             errors = await self.rmDevice()
+        elif req_type == "killSession":
+            errors = await self.killSession()
         
         return self.render("admin.html", messages=errors)
 
@@ -149,3 +152,16 @@ class AdminHandler(UserBaseHandler):
             except Exception:
                 return "Failed to remove device"
         return ""
+
+    async def killSession(self):
+        try:
+            deviceName = self.get_argument("device")
+        except MissingArgumentError:
+            return "Missing Device name"
+
+        with self.make_session() as session:
+            try:
+                deviceID = await as_future(session.query(DeviceQueue.id).filter_by(name=deviceName).one)
+            except Exception:
+                return "Error while looking up device"
+        DeviceStateHandler.killSession(deviceID)
