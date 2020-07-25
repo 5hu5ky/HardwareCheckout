@@ -20,8 +20,8 @@ class UserBaseHandler(SessionMixin, RequestHandler):
         Not allowed to be async
         '''
         try:
-            user_id = int(self.get_secure_cookie('user'))
-            return self.session.query(User.id).filter_by(id=user_id).one()
+            user_cookie = int(self.get_secure_cookie('user'))
+            return user_cookie
         except NoResultFound:
             return False
         except TypeError:
