@@ -34,6 +34,8 @@ class AdminHandler(UserBaseHandler):
             errors = await self.addAdmin()
         elif req_type == "changeDevicePassword":
             errors = await self.changeDevicePassword()
+        elif req_type == "rmDevice":
+            errors = await self.rmDevice()
         
         return self.render("admin.html", messages=errors)
 
@@ -131,4 +133,19 @@ class AdminHandler(UserBaseHandler):
             except Exception:
                 return "Error while updating password"
 
+        return ""
+
+    async def rmDevice(self):
+        # TODO: is this safe to do? what are the implications if someone is connected?
+        try:
+            username = self.get_argument("username")
+        except MissingArgumentError:
+            return "Missing username"
+
+        with self.make_session() as session:
+            try:
+                device = await as_future(session.query(DeviceQueue).filter_by(name=username).one)
+                await as_future(partial(session.delete,device))
+            except Exception:
+                return "Failed to remove device"
         return ""
