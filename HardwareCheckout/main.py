@@ -1,4 +1,4 @@
-from .models import DeviceQueue, DeviceType
+from .models import DeviceQueue, DeviceType, User
 from .webutil import Blueprint, UserBaseHandler, Timer, make_session
 from tornado_sqlalchemy import as_future
 
@@ -31,16 +31,17 @@ class MainHandler(UserBaseHandler):
 
         # check if use is logged in
         if self.current_user:
-            #check if the user is an admin
-            if self.current_user.has_roles('Admin'):
-                terminals = self.RWTerminals
-                show_streams = False
-                devices = []
-            else:
-                # Get any devices the user may own.
-                with self.make_session() as session:
-                    devices = await self.current_user.get_owned_devices_async(session)
-                devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
+            with self.make_session() as session:
+                #check if the user is an admin
+                current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+                if current_user.has_roles('Admin'):
+                    terminals = self.RWTerminals
+                    show_streams = False
+                    devices = []
+                else:
+                    # Get any devices the user may own.
+                    devices = await current_user.get_owned_devices_async(session)
+                    devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
 
             # get a listing of all the queues available
             # Make a copy of the list because we are iterating through it

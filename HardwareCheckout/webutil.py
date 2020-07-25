@@ -21,7 +21,7 @@ class UserBaseHandler(SessionMixin, RequestHandler):
         '''
         try:
             user_id = int(self.get_secure_cookie('user'))
-            return self.session.query(User).filter_by(id=user_id).one()
+            return self.session.query(User.id).filter_by(id=user_id).one()
         except NoResultFound:
             return False
         except TypeError:
