@@ -5,8 +5,9 @@ from tornado.web import authenticated, MissingArgumentError
 from werkzeug.security import generate_password_hash
 from tornado_sqlalchemy import as_future
 
-from .models import DeviceQueue, Role, DeviceType
+from .models import DeviceQueue, Role, DeviceType, User
 from .webutil import Blueprint, UserBaseHandler
+from .auth import PASSWORD_CRYPTO_TYPE
 
 admin = Blueprint()
 
@@ -29,6 +30,8 @@ class AdminHandler(UserBaseHandler):
             errors = await self.addDeviceType()
         elif req_type == "addDevice":
             errors = await self.addDevice()
+        elif req_type == "addAdmin":
+            errors = self.addAdmin()
         
         return self.render("admin.html", messages=errors)
 
@@ -44,9 +47,11 @@ class AdminHandler(UserBaseHandler):
     async def addDevice(self):
         try:
             file = self.request.files['config'][0]
-            device_type = self.get_argument("type")
+            device_type = self.get_argument("device_type")
         except KeyError:
             return "Missing device config file"
+        except MissingArgumentError:
+            return "Missing device type"
 
         config = ConfigParser()
         try:
@@ -65,7 +70,7 @@ class AdminHandler(UserBaseHandler):
                             name=config[section]['username'],
                             password=generate_password_hash(
                                 config[section]["password"], 
-                                method="pbkdf2:sha256:45000"
+                                method=PASSWORD_CRYPTO_TYPE
                             ),
                             state="want-provision",
                             type=device_type_id
@@ -77,3 +82,35 @@ class AdminHandler(UserBaseHandler):
 
         return error_msg
         
+    async def addAdmin(self):
+        try:
+            username = self.get_argument("username")
+            password = self.get_argument("password")
+        except MissingArgumentError:
+            return "Missing username or password"
+
+        with self.make_session() as session:
+            try:
+                admin = await as_future(session.query(Role).filter_by(name="Admin").first)
+                human = await as_future(session.query(Role).filter_by(name="Human").first)
+                device = await as_future(session.query(Role).filter_by(name="Device").first)
+            except Exception:
+                return "Error while finding roles"
+
+            try:
+                await as_future(
+                    partial(
+                        session.add,
+                        User(
+                            name=username, 
+                            password=generate_password_hash(
+                                password, 
+                                method=PASSWORD_CRYPTO_TYPE
+                            ),
+                            roles=[admin, human, device]
+                        )
+                    )
+                )
+            except Exception:
+                return "Error while attempting to add user"
+        return ""

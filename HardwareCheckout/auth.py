@@ -9,6 +9,7 @@ from .webutil import Blueprint, UserBaseHandler
 
 auth = Blueprint()
 
+PASSWORD_CRYPTO_TYPE="pbkdf2:sha256:45000"
 
 @auth.route("/login", name="login")
 class LoginHandler(UserBaseHandler):
@@ -87,7 +88,7 @@ class SignUpHandler(UserBaseHandler):
             # Create the new user entry
             new_user = User(
                 name=name,
-                password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
+                password=generate_password_hash(password, method=PASSWORD_CRYPTO_TYPE),
                 roles=[roles],
             )
 
