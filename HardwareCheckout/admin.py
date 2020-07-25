@@ -31,7 +31,9 @@ class AdminHandler(UserBaseHandler):
         elif req_type == "addDevice":
             errors = await self.addDevice()
         elif req_type == "addAdmin":
-            errors = self.addAdmin()
+            errors = await self.addAdmin()
+        elif req_type == "changeDevicePassword":
+            errors = await self.changeDevicePassword()
         
         return self.render("admin.html", messages=errors)
 
@@ -61,7 +63,7 @@ class AdminHandler(UserBaseHandler):
         
         error_msg = ''
         with self.make_session() as session:
-            device_type_id = await as_future(session.query(DeviceType.id).filter_by(name=device_type).one)[0]
+            device_type_id = await as_future(session.query(DeviceType.id).filter_by(name=device_type).one)
 
             for section in config.sections():
                 try:
@@ -113,4 +115,20 @@ class AdminHandler(UserBaseHandler):
                 )
             except Exception:
                 return "Error while attempting to add user"
+        return ""
+
+    async def changeDevicePassword(self):
+        try:
+            username = self.get_argument("username")
+            password = self.get_argument("password")
+        except MissingArgumentError:
+            return "Missing username or password"
+
+        with self.make_session() as session:
+            try:
+                device = await as_future(session.query(DeviceQueue).filter_by(name=username).one)
+                device.password = generate_password_hash(password, method=PASSWORD_CRYPTO_TYPE)
+            except Exception:
+                return "Error while updating password"
+
         return ""
