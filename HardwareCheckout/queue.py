@@ -1,4 +1,3 @@
-from sqlalchemy import event
 from tornado.web import authenticated, RequestHandler
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
 from tornado_sqlalchemy import SessionMixin, as_future
@@ -8,9 +7,9 @@ from .webutil import Blueprint, Waiters, UserBaseHandler
 
 queue = Blueprint()
 
-
 def on_user_assigned_device(userId, device):
-    # TODO: set timer
+    message = {'type': 'queue_shrink', 'queue': targetID}
+    QueueWSHandler.waiters.broadcast(message)
     device_info = {'id':device.id,'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
     message = {'type': 'new_device', 'device': device_info}
     return QueueWSHandler.waiters[userId].send(message)
@@ -19,17 +18,6 @@ def on_user_deallocated_device(userId, deviceID, reason="normal"):
     device_info = {'id':deviceID}
     message = {'type': 'rm_device', 'device': device_info, 'reason':reason}
     return QueueWSHandler.waiters[userId].send(message)
-
-@event.listens_for(UserQueue, 'after_delete')
-def on_userqueue_delete(mapper, connection, target):
-    message = {'type': 'queue_shrink', 'queue': target.type}
-    QueueWSHandler.waiters.broadcast(message)
-
-
-@event.listens_for(UserQueue, 'after_insert')
-def on_userqueue_insert(mapper, connection, target):
-    message = {'type': 'queue_grow', 'queue': target.type}
-    QueueWSHandler.waiters.broadcast(message)
 
 
 @queue.route("/event")
@@ -42,11 +30,12 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     async def open(self):
         if self.current_user:
-            self.waiters[self.current_user.id].add(self)
+            self.waiters[self.current_user].add(self)
             # send all devices, in case WS connecton was terminated then re-established
             # and a device was assigned in the meantime
             with self.make_session() as session:
-                devices = await self.current_user.get_owned_devices_async(session)
+                current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+                devices = await current_user.get_owned_devices_async(session)
                 devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2], "id":a[3]} for a in devices]
                 self.write_message({'type': 'all_devices', 'devices': devices})
         else:
@@ -67,7 +56,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     def on_close(self):
         if self.current_user:
-            QueueWSHandler.waiters[self.current_user.id].remove(self)
+            QueueWSHandler.waiters[self.current_user].remove(self)
         else:
             QueueWSHandler.waiters[-1].remove(self)
 
@@ -102,20 +91,26 @@ class SingleQueueHandler(UserBaseHandler):
             self.render("error.html", error="Invalid Queue")
             return
 
-        current_user_id = self.current_user.id
 
         with self.make_session() as session:
             # Check if the user is already registered for a queue
-            entry = await as_future(session.query(UserQueue).filter_by(userId=current_user_id, type=id).first)
+            entry = await as_future(session.query(UserQueue).filter_by(userId=self.current_user, type=id).first)
             if entry:
                 self.render("error.html", error="User already registered for this queue")
             else:
                 # Add user to the queue
-                newEntry = UserQueue(userId=current_user_id, type=id)
+                newEntry = UserQueue(userId=self.current_user, type=id)
                 session.add(newEntry)
                 # Send them back to the front page
                 self.redirect(self.reverse_url("main"))
 
-            # Check if someone is able to claim a device
-            self.current_user.try_to_claim_device(session, id, on_user_assigned_device)
+            self.on_userqueue_insert(id)
 
+            # # Check if someone is able to claim a device
+            # current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+            # current_user.try_to_claim_device(session, id, on_user_assigned_device)
+
+    @staticmethod
+    def on_userqueue_insert(targetID):
+        message = {'type': 'queue_grow', 'queue': targetID}
+        QueueWSHandler.waiters.broadcast(message)
