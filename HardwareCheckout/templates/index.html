@@ -90,6 +90,9 @@
             <div id="stream-2" class="column"></div>
             <div id="stream-3" class="column"></div>
         </div>
+        <div class="columns twitch-streams">
+         <div id="stream-4" class="column"></div>
+        </div>
         {% end %}
 
         <div class="tab">
@@ -125,6 +128,12 @@
         channel: "carhackingvillage3"
     });
 
+    let player4 = new Twitch.Player("stream-4", {
+        width: 400,
+        height: 300,
+        channel: "throwawaythingsno0001"
+    });
+    
 </script>
 {% end %}
 
