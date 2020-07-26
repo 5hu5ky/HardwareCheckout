@@ -1,6 +1,7 @@
-from .models import DeviceQueue, DeviceType, User
+from .models import DeviceQueue, DeviceType, User, UserQueue
 from .webutil import Blueprint, UserBaseHandler, Timer, make_session
 from tornado_sqlalchemy import as_future
+from sqlalchemy import func, or_
 
 main = Blueprint()
 
@@ -51,21 +52,11 @@ class MainHandler(UserBaseHandler):
         self.render('index.html', devices=devices, queues=queues, show_streams=show_streams, terminals=terminals)
 
     @classmethod
-    def updateQueues(cls):
+    async def updateQueues(cls):
         '''
-        TODO: I couldn't get this to async. Don't know why.
+        TODO: I couldn't get this to work with the functions in DeviceQueue and DeviceType. Don't know why.
         '''
         with make_session() as session:
-            # Start all the queries
-            # future_WebUrls = DeviceQueue.get_all_web_urls_async(session)
-            # future_WebUrlsRO = DeviceQueue.get_all_ro_urls_async(session)
-            # future_Queues = DeviceType.get_queues_async(session)
-
-            # # Wait for the results
-            # cls.RWTerminals = await future_WebUrls
-            # cls.ROTerminals = await future_WebUrlsRO
-            # cls.queues      = await future_Queues
-
-            cls.RWTerminals = DeviceQueue.get_all_web_urls(session)
-            cls.ROTerminals = DeviceQueue.get_all_ro_urls(session)
-            cls.queues      = DeviceType.get_queues(session)
+            cls.RWTerminals = await as_future(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state="in-use").all)
+            cls.ROTerminals = await as_future(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state="in-use").all)
+            cls.queues      = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
