@@ -26,12 +26,12 @@ case $(uname -m) in
     i386)   architecture="386" ;;
     i686)   architecture="386" ;;
     x86_64) architecture="amd64" ;;
-    armv6l)    architecture="armhf" ;;
+    arm|armv6l)    architecture="armhf" ;;
     arm|armv7l)    dpkg --print-architecture | grep -q "arm64" && architecture="arm64" || architecture="arm" ;;
 esac
 
 
-if [[ "${architecture}" != "arm" ]]; then
+if [ "${architecture}" != "arm" ] || [ "${architecture}" != "armhf" ]; then
 echo "This is not an arm chipset... Bye bye!"
 exit 1
 fi
