@@ -34,15 +34,19 @@ class MainHandler(UserBaseHandler):
         if self.current_user:
             with self.make_session() as session:
                 #check if the user is an admin
-                current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
-                if current_user.has_roles('Admin'):
-                    terminals = self.RWTerminals
-                    show_streams = False
-                    devices = []
+                try:
+                    current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+                except Exception:
+                    pass
                 else:
-                    # Get any devices the user may own.
-                    devices = await current_user.get_owned_devices_async(session)
-                    devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
+                    if current_user.has_roles('Admin'):
+                        terminals = self.RWTerminals
+                        show_streams = False
+                        devices = []
+                    else:
+                        # Get any devices the user may own.
+                        devices = await current_user.get_owned_devices_async(session)
+                        devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2]} for a in devices]
 
             # get a listing of all the queues available
             # Make a copy of the list because we are iterating through it
