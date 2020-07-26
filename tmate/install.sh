@@ -31,7 +31,7 @@ case $(uname -m) in
 esac
 
 
-if [ "${architecture}" != "arm" ] || [ "${architecture}" != "armhf" ]; then
+if [ "${architecture}" != "arm" ] && [ "${architecture}" != "armhf" ]; then
 echo "This is not an arm chipset... Bye bye!"
 exit 1
 fi
