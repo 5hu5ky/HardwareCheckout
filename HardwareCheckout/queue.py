@@ -42,11 +42,12 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     async def open(self):
         if self.current_user:
-            self.waiters[self.current_user.id].add(self)
+            self.waiters[self.current_user].add(self)
             # send all devices, in case WS connecton was terminated then re-established
             # and a device was assigned in the meantime
             with self.make_session() as session:
-                devices = await self.current_user.get_owned_devices_async(session)
+                current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+                devices = await current_user.get_owned_devices_async(session)
                 devices = [{'name': a[0], 'sshAddr': a[1], 'webUrl': a[2], "id":a[3]} for a in devices]
                 self.write_message({'type': 'all_devices', 'devices': devices})
         else:
@@ -67,7 +68,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     def on_close(self):
         if self.current_user:
-            QueueWSHandler.waiters[self.current_user.id].remove(self)
+            QueueWSHandler.waiters[self.current_user].remove(self)
         else:
             QueueWSHandler.waiters[-1].remove(self)
 
@@ -102,20 +103,20 @@ class SingleQueueHandler(UserBaseHandler):
             self.render("error.html", error="Invalid Queue")
             return
 
-        current_user_id = self.current_user.id
 
         with self.make_session() as session:
             # Check if the user is already registered for a queue
-            entry = await as_future(session.query(UserQueue).filter_by(userId=current_user_id, type=id).first)
+            entry = await as_future(session.query(UserQueue).filter_by(userId=self.current_user, type=id).first)
             if entry:
                 self.render("error.html", error="User already registered for this queue")
             else:
                 # Add user to the queue
-                newEntry = UserQueue(userId=current_user_id, type=id)
+                newEntry = UserQueue(userId=self.current_user, type=id)
                 session.add(newEntry)
                 # Send them back to the front page
                 self.redirect(self.reverse_url("main"))
 
             # Check if someone is able to claim a device
-            self.current_user.try_to_claim_device(session, id, on_user_assigned_device)
+            current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+            current_user.try_to_claim_device(session, id, on_user_assigned_device)
 
