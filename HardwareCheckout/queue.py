@@ -1,4 +1,3 @@
-from sqlalchemy import event
 from tornado.web import authenticated, RequestHandler
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
 from tornado_sqlalchemy import SessionMixin, as_future
@@ -8,9 +7,9 @@ from .webutil import Blueprint, Waiters, UserBaseHandler
 
 queue = Blueprint()
 
-
 def on_user_assigned_device(userId, device):
-    # TODO: set timer
+    message = {'type': 'queue_shrink', 'queue': targetID}
+    QueueWSHandler.waiters.broadcast(message)
     device_info = {'id':device.id,'name': device.type_obj.name, 'sshAddr': device.sshAddr, 'webUrl': device.webUrl}
     message = {'type': 'new_device', 'device': device_info}
     return QueueWSHandler.waiters[userId].send(message)
@@ -19,17 +18,6 @@ def on_user_deallocated_device(userId, deviceID, reason="normal"):
     device_info = {'id':deviceID}
     message = {'type': 'rm_device', 'device': device_info, 'reason':reason}
     return QueueWSHandler.waiters[userId].send(message)
-
-@event.listens_for(UserQueue, 'after_delete')
-def on_userqueue_delete(mapper, connection, target):
-    message = {'type': 'queue_shrink', 'queue': target.type}
-    QueueWSHandler.waiters.broadcast(message)
-
-
-@event.listens_for(UserQueue, 'after_insert')
-def on_userqueue_insert(mapper, connection, target):
-    message = {'type': 'queue_grow', 'queue': target.type}
-    QueueWSHandler.waiters.broadcast(message)
 
 
 @queue.route("/event")
@@ -116,7 +104,13 @@ class SingleQueueHandler(UserBaseHandler):
                 # Send them back to the front page
                 self.redirect(self.reverse_url("main"))
 
-            # Check if someone is able to claim a device
-            current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
-            current_user.try_to_claim_device(session, id, on_user_assigned_device)
+            self.on_userqueue_insert(id)
 
+            # # Check if someone is able to claim a device
+            # current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+            # current_user.try_to_claim_device(session, id, on_user_assigned_device)
+
+    @staticmethod
+    def on_userqueue_insert(targetID):
+        message = {'type': 'queue_grow', 'queue': targetID}
+        QueueWSHandler.waiters.broadcast(message)

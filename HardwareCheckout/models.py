@@ -47,37 +47,37 @@ class User(db.Model):
                 return True
         return False
 
-    def try_to_claim_device(self, session, device_type, callback):
-        if type(device_type) is not int:
-            device_type = device_type.id
-        device = (
-            session.query(DeviceQueue)
-            .filter_by(type=device_type, state="ready")
-            .first()
-        )
-        if device:
-            for uq in session.query(UserQueue).filter_by(
-                userId=self.id, type=device_type
-            ):
-                session.delete(uq)
-            device.state = "in-queue"
-            session.commit()
-            callback(self.id, device)
+    # def try_to_claim_device(self, session, device_type, callback):
+    #     if type(device_type) is not int:
+    #         device_type = device_type.id
+    #     device = (
+    #         session.query(DeviceQueue)
+    #         .filter_by(type=device_type, state="ready")
+    #         .first()
+    #     )
+    #     if device:
+    #         for uq in session.query(UserQueue).filter_by(
+    #             userId=self.id, type=device_type
+    #         ):
+    #             session.delete(uq)
+    #         device.state = "in-queue"
+    #         session.commit()
+    #         callback(self.id, device)
 
-    async def try_to_claim_device_async(self, session, device_type, callback):
-        if type(device_type) is not int:
-            device_type = device_type.id
-        device = await as_future(
-            session.query(DeviceQueue).filter_by(type=device_type, state="ready").first
-        )
-        if device:
-            for uq in await as_future(
-                session.query(UserQueue).filter_by(userId=self.id, type=device_type).all
-            ):
-                session.delete(uq)
-            device.state = "in-queue"
-            session.commit()
-            await callback(self.id, device)
+    # async def try_to_claim_device_async(self, session, device_type, callback):
+    #     if type(device_type) is not int:
+    #         device_type = device_type.id
+    #     device = await as_future(
+    #         session.query(DeviceQueue).filter_by(type=device_type, state="ready").first
+    #     )
+    #     if device:
+    #         for uq in await as_future(
+    #             session.query(UserQueue).filter_by(userId=self.id, type=device_type).all
+    #         ):
+    #             session.delete(uq)
+    #         device.state = "in-queue"
+    #         session.commit()
+    #         await callback(self.id, device)
 
 
 class Role(db.Model):
