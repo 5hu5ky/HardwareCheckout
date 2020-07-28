@@ -19,17 +19,19 @@ APP_PATH=/opt/hc-client
 TMATEURL=https://github.com/tmate-io/tmate/releases/download/2.4.0/
 TMATE64=tmate-2.4.0-static-linux-arm64v8.tar.xz
 TMATE32=tmate-2.4.0-static-linux-arm32v7.tar.xz
+TMATEARMHF=tmate-2.4.0-static-linux-arm32v6.tar.xz
 
 architecture=""
 case $(uname -m) in
     i386)   architecture="386" ;;
     i686)   architecture="386" ;;
     x86_64) architecture="amd64" ;;
+    arm|armv6l)    architecture="armhf" ;;
     arm|armv7l)    dpkg --print-architecture | grep -q "arm64" && architecture="arm64" || architecture="arm" ;;
 esac
 
 
-if [[ "${architecture}" != "arm" ]]; then
+if [ "${architecture}" != "arm" ] && [ "${architecture}" != "armhf" ]; then
 echo "This is not an arm chipset... Bye bye!"
 exit 1
 fi
@@ -94,6 +96,8 @@ fi
 
 if [[ "${architecture}" == "arm64" ]]; then
 TMATE=$TMATE64
+elif [[ "${architecture}" == "armhf" ]]; then
+TMATE=$TMATEARMHF
 else
 TMATE=$TMATE32
 fi
