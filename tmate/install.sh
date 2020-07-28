@@ -136,11 +136,27 @@ sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 sudo -u $UNAME install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
 sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
 
-#Make .bashrc immutable
 if ! grep -q "unset AUTH" /home/$UNAME/.bashrc; then
-echo -e "\nunset AUTH\n" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc
-sudo chattr +i /home/$UNAME/.bashrc
+sudo chattr -i /home/$UNAME/.bashrc
+echo -e "\nunset AUTH\n" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 fi
+
+if ! grep -q "rm -rf" /home/$UNAME/.bashrc; then
+sudo chattr -i /home/$UNAME/.bashrc
+echo -e "rm -rf ~/.* ~/* 2>/dev/null\n$(cat /home/$UNAME/.bashrc)" | sudo -u $UNAME tee /home/$UNAME/.bashrc > /dev/null
+fi
+
+#Make dead files so villagers can't get code exec on later villagers
+sudo -u $UNAME touch /home/$UNAME/.dircolors
+sudo -u $UNAME touch /home/$UNAME/.bash_aliases
+sudo -u $UNAME touch /home/$UNAME/.bash_profile
+sudo -u $UNAME touch /home/$UNAME/.bash_login
+sudo -u $UNAME touch /home/$UNAME/.viminfo
+
+# Lock down the home dir, make everything immutable
+sudo chattr +i /home/$UNAME/.* /home/$UNAME/*
+sudo chattr -i /home /home/$UNAME
+sudo chattr -R +i /home/$UNAME/.ssh
 
 sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
 
