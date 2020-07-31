@@ -142,7 +142,7 @@ The server will come up on `https://127.0.0.1`
 ### Remove device
 - `./rmDevice.py -d <device name>`
 
-## Adding Twitch Streams (on the server side)
+### Adding Twitch Streams (on the server side)
 - `./addTwitchStream.py -n <stream name>`
 
 ## Hardware Setup (Raspberry Pi)
