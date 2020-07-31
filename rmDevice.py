@@ -8,15 +8,15 @@ from werkzeug.security import generate_password_hash
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument("username")
+parser.add_argument("-d","--devicename",dest="devicename", help="Device name", required=True)
 args = parser.parse_args()
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
-device = s.query(DeviceQueue).filter_by(name=args.username).first()
+device = s.query(DeviceQueue).filter_by(name=args.devicename).first()
 if not device:
-    print("no device")
+    print("no device found!")
     exit(0)
 
 s.delete(device)

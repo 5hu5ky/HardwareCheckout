@@ -7,8 +7,8 @@ from werkzeug.security import generate_password_hash
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument("username")
-parser.add_argument("password")
+parser.add_argument("-u","--username",dest="username", help="User name", required=True)
+parser.add_argument("-p","--password",dest="password", help="User password", required=True)
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
