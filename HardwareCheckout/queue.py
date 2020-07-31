@@ -70,8 +70,14 @@ class ListAllQueuesHandler(SessionMixin, RequestHandler):
 
 @queue.route(r'/(\d+)')
 class SingleQueueHandler(UserBaseHandler):
+    @authenticated
     async def get(self, id):
-        # TODO: Should this be a restricted function?
+        with self.make_session() as session:
+            current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+
+            if not current_user.has_roles("Admin"):
+                self.redirect(self.reverse_url("ROTerminals"))
+                return
         try:
             id = int(id)
         except ValueError:
@@ -81,7 +87,7 @@ class SingleQueueHandler(UserBaseHandler):
         with self.make_session() as session:
             names = await as_future(session.query(User.name).select_from(UserQueue).join(User).filter(UserQueue.type == id).order_by(UserQueue.id).all)
         self.write({'result': [{'name': name} for name in names]})
-        # self.redirect(self.reverse_url("main"))
+        # self.redirect(self.reverse_url("main"))   
 
     @authenticated
     async def post(self, id):
