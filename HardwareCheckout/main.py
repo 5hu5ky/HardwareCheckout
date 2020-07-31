@@ -1,4 +1,4 @@
-from .models import DeviceQueue, DeviceType, User, UserQueue
+from .models import DeviceQueue, DeviceType, User, UserQueue, TwitchStreams
 from .webutil import Blueprint, UserBaseHandler, Timer, make_session
 from tornado_sqlalchemy import as_future
 from sqlalchemy import func, or_
@@ -12,7 +12,8 @@ class MainHandler(UserBaseHandler):
     RWTerminals = []
     ROTerminals = []
     queues = []
-
+    tstreams = []
+    
     async def get(self):
         """
         Home path for the site
@@ -24,7 +25,7 @@ class MainHandler(UserBaseHandler):
         show_streams = True
         devices = []
         queues = []
-
+        
         # If no background queue update thread as started, start it
         if self.timer is None:
             print("Scheduling")
@@ -64,3 +65,4 @@ class MainHandler(UserBaseHandler):
             cls.RWTerminals = await as_future(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state="in-use").all)
             cls.ROTerminals = await as_future(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state="in-use",ctf=1).all)
             cls.queues      = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
+            cls.tstreams    = await as_future(session.query(TwitchStreams.name).all)
