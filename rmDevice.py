@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument("-d","--devicename",dest="devicename", help="Device name", required=True)
+parser.add_argument("-d","--devicename", help="Device name", required=True)
 args = parser.parse_args()
 
 session = sessionmaker(bind=create_engine(db_path))

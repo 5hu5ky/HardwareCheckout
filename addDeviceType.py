@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--type', dest="type", help="Device type to add", required=True)
+parser.add_argument('-t', '--type', help="Device type to add", required=True)
 args = parser.parse_args()
 
 
