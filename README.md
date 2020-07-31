@@ -139,6 +139,8 @@ The server will come up on `https://127.0.0.1`
 - Add a single device:
 `./addDevice.py -u <devicename> -p <password> -t <devicetype>`
 
+### Adding Twitch Channels (on the server side)
+- `./addTwitchStream.py -n <stream name>`
 
 ## Hardware Setup (Raspberry Pi)
 Clone the repo on to your Rasberry Pi; under the tmate folder look for the `install.sh`
@@ -146,5 +148,4 @@ Clone the repo on to your Rasberry Pi; under the tmate folder look for the `inst
 
 
 
-## Adding Twitch Channels (on the server side)
-TODO 
+

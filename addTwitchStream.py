@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("type", help="Stream name to add")
+parser.add_argument('-n', '--name', help="Stream name to add")
 args = parser.parse_args()
 
 
