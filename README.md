@@ -139,7 +139,7 @@ The server will come up on `https://127.0.0.1`
 - Add a single device:
 `./addDevice.py -u <devicename> -p <password> -t <devicetype>`
 
-### Adding Twitch Channels (on the server side)
+### Adding Twitch Streams (on the server side)
 - `./addTwitchStream.py -n <stream name>`
 
 ## Hardware Setup (Raspberry Pi)
