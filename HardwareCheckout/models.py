@@ -160,7 +160,7 @@ class DeviceQueue(db.Model):
         return as_future(DeviceQueue.get_all_ro_urls(session).all)
 
 
-class TwitchStreams(db.Model):
+class TwitchStream(db.Model):
     __tablename__ = "twitchstreams"
     id = Column(Integer, primary_key=True)
     name = Column(String(200))
