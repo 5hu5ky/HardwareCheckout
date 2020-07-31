@@ -54,7 +54,7 @@ class MainHandler(UserBaseHandler):
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "size": i[2]} for i in tqueues]
 
-        self.render('index.html', devices=devices, queues=queues, show_streams=show_streams, terminals=terminals)
+        self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals)
 
     @classmethod
     async def updateQueues(cls):

@@ -87,13 +87,11 @@
         {% if show_streams %}
         	{% if tstreams %}
         		{% for stream in tstreams %}
-				    {% if forloop.first %}<div class="columns twitch-streams">{% endif %}
-				    <div id="stream-{{forloop.count}}" class="column">
-				        </div>
-    				{% if forloop.counter|divisibleby:3 %}</div><div class="columns twitch-streams">{% endif %}
-    				{% if forloop.last %}</div>{% endif %}
-				{% endfor %}    
-        		{% end %}
+					{% if loop.first %}<div class="columns twitch-streams">{% end %}
+					<div id="stream-{{loop.index}}" class="column"></div> 				    
+		    		{% if loop.index %3 == 0 and loop.index!=tstreams|length %}</div><div class="columns twitch-streams">{% end %}
+    				{% if loop.last %}</div>{% end %}
+				{% end %}       
         	{% end %}
         {% end %}
 
@@ -115,7 +113,7 @@
 <script src="{{ static_url('js/queue.js') }}"></script>
 <script type="text/javascript">
 {% for stream in tstreams %}
-let player{{forloop.counter}} = new Twitch.Player("stream-{{forloop.counter}}", {
+let player{{loop.index}} = new Twitch.Player("stream-{{loop.index}}", {
         width: 400,
         height: 300,
         channel: "{{stream}}"
