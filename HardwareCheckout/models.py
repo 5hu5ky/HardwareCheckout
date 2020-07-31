@@ -22,6 +22,7 @@ class User(db.Model):
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
     password = Column(String(93), unique=True)
+    ctf = Column(Integer)
     name = Column(String(1000))
 
     # relationships

@@ -71,6 +71,7 @@ class SignUpHandler(UserBaseHandler):
         try:
             name = self.get_argument("name")
             password = self.get_argument("password")
+            ctf = self.get_argument("ctf")
         except MissingArgumentError:
             return self.render("signup.html", messages="Missing username or password")
 
@@ -87,6 +88,7 @@ class SignUpHandler(UserBaseHandler):
             # Create the new user entry
             new_user = User(
                 name=name,
+                ctf=ctf,
                 password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
                 roles=[roles],
             )
