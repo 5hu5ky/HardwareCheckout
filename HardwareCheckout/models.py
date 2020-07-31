@@ -32,6 +32,8 @@ class User(db.Model):
     def get_owned_devices(self, session):
         return session.query(
             DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl, DeviceQueue.id
+        ).join(
+            DeviceType
         ).filter(
             or_(DeviceQueue.state == "in-queue", DeviceQueue.state == "in-use"),
             DeviceQueue.owner == self.id,
