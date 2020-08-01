@@ -50,38 +50,6 @@ class User(db.Model):
                 return True
         return False
 
-    # def try_to_claim_device(self, session, device_type, callback):
-    #     if type(device_type) is not int:
-    #         device_type = device_type.id
-    #     device = (
-    #         session.query(DeviceQueue)
-    #         .filter_by(type=device_type, state="ready")
-    #         .first()
-    #     )
-    #     if device:
-    #         for uq in session.query(UserQueue).filter_by(
-    #             userId=self.id, type=device_type
-    #         ):
-    #             session.delete(uq)
-    #         device.state = "in-queue"
-    #         session.commit()
-    #         callback(self.id, device)
-
-    # async def try_to_claim_device_async(self, session, device_type, callback):
-    #     if type(device_type) is not int:
-    #         device_type = device_type.id
-    #     device = await as_future(
-    #         session.query(DeviceQueue).filter_by(type=device_type, state="ready").first
-    #     )
-    #     if device:
-    #         for uq in await as_future(
-    #             session.query(UserQueue).filter_by(userId=self.id, type=device_type).all
-    #         ):
-    #             session.delete(uq)
-    #         device.state = "in-queue"
-    #         session.commit()
-    #         await callback(self.id, device)
-
 
 class Role(db.Model):
     __tablename__ = "roles"
@@ -100,19 +68,7 @@ class DeviceType(db.Model):
     __tablename__ = "devicetype"
     id = Column(Integer, primary_key=True)
     name = Column(String(250), unique=True)
-
-    @staticmethod
-    def get_queues(session):
-        return (
-            session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId))
-            .select_from(DeviceType)
-            .join(UserQueue, isouter=True)
-            .group_by(DeviceType.id, DeviceType.name)
-        )
-
-    @staticmethod
-    def get_queues_async(session):
-        return as_future(DeviceType.get_queues(session).all)
+    enabled = Column(Integer)
 
 
 class UserQueue(db.Model):
@@ -131,8 +87,7 @@ class DeviceQueue(db.Model):
     sshAddr = Column(String(200))
     webUrl = Column(String(200))
     roUrl = Column(String(200))
-    state = Column(String(200)) # TODO do we need this now?
-    # expiration = Column(DateTime) # TODO this should be replaced be scheduling callbacks
+    state = Column(String(200))
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
     type_obj = relationship("DeviceType")

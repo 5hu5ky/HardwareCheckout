@@ -48,7 +48,7 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return "Missing device type"
         with self.make_session() as session:
-            await as_future(partial(session.add,DeviceType(name=name)))
+            await as_future(partial(session.add,DeviceType(name=name, enabled=1)))
         return ''
 
     async def addDevice(self):
