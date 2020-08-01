@@ -3,10 +3,10 @@ Description=Starts tmate session
 PartOf=workers.target
 
 [Service]
-User=villager
 Type=simple
-ExecStartPre=/bin/mkdir -p /tmp/devices/%i
-ExecStart=/usr/bin/tmate -S /tmp/devices/%i/%i.sock new-session
+ExecStartPre=/usr/bin/pkill -9 -u villager-%i
+ExecStartPre=/bin/su villager-%i /bin/mkdir -p /tmp/devices/%i
+ExecStart=/bin/su villager-%i /usr/bin/tmate -S /tmp/devices/%i/%i.sock new-session
 EnvironmentFile=/root/%i
 Restart=on-failure
 
