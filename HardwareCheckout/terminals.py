@@ -27,11 +27,13 @@ class ROTerminalHandler(UserBaseHandler):
 class RWTerminalHandler(UserBaseHandler):
     @authenticated
     async def get(self):
-        if not self.current_user.has_roles("Admin"):
-            self.redirect(self.reverse_url("ROTerminals"))
-            return
-
         with self.make_session() as session:
+            current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+
+            if not current_user.has_roles("Admin"):
+                self.redirect(self.reverse_url("ROTerminals"))
+                return
+
             results = await as_future(
                 session.query(
                     DeviceQueue.name,
