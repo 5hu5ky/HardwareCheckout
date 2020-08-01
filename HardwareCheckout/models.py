@@ -132,6 +132,7 @@ class DeviceQueue(db.Model):
     webUrl = Column(String(200))
     roUrl = Column(String(200))
     state = Column(String(200)) # TODO do we need this now?
+    ctf = Column(Integer)
     # expiration = Column(DateTime) # TODO this should be replaced be scheduling callbacks
     owner = Column(Integer, ForeignKey("user.id"))
     type = Column(Integer, ForeignKey("devicetype.id"))
