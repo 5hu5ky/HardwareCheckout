@@ -22,6 +22,7 @@ class User(db.Model):
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
     password = Column(String(93), unique=True)
+    ctf = Column(Integer)
     name = Column(String(1000))
 
     # relationships
@@ -159,3 +160,9 @@ class DeviceQueue(db.Model):
     @staticmethod
     def get_all_ro_urls_async(session):
         return as_future(DeviceQueue.get_all_ro_urls(session).all)
+
+
+class TwitchStream(db.Model):
+    __tablename__ = "twitchstreams"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200))

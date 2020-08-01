@@ -1,12 +1,31 @@
-{% extends "base.html" %}
-
 {% block head %}
+	<title>{{ error }}</title>
+      <style>
+        body {
+            background-color: #10041e;
+        }
+        .error-page {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
+        .error-text {
+            font-family: 'Orbitron', sans-serif;
+            color: white;
+            font-size: 100px;
+        }
+      </style>
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800&amp;display=swap" rel="stylesheet">
 {% end %}
 
 {% block content %}
-    <h1>{{ error }}</h1>
+    <div class="error-page">
+      <div class="error-text">
+        {{error}}
+      </div>
+    </div>
 {% end %}
 
 {% block scripts %}
 {% end %}
-

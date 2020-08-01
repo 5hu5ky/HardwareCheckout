@@ -11,10 +11,10 @@ import configparser
 
 
 parser = ArgumentParser()
-parser.add_argument('-u', '--username', dest='username', required=False)
-parser.add_argument('-p','--password', dest='password', required=False)
-parser.add_argument('-t', '--type', dest='devtype', required=False)
-parser.add_argument('-i', '--ini', help='Ini file containing list of users', dest='inifile', required=False)
+parser.add_argument('-u', '--username', help="Device user name", required=False)
+parser.add_argument('-p','--password',  help="Device user password", required=False)
+parser.add_argument('-t', '--type', help="Device type", required=False)
+parser.add_argument('-i', '--ini', help='Ini file containing list of users', required=False)
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
