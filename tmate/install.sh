@@ -96,8 +96,20 @@ EOF
     fi
 
     if ${CTF_MODE} && ! grep -q "rm -rf" /home/$UNAME/.bashrc; then
-    sudo chattr -i /home/$UNAME/.bashrc
-    echo -e "rm -rf ~/.* ~/* 2>/dev/null\n$(cat /home/$UNAME/.bashrc)" | sudo -u $UNAME tee /home/$UNAME/.bashrc > /dev/null
+        sudo chattr -i /home/$UNAME/.bashrc
+        echo -e "rm -rf ~/.* ~/* 2>/dev/null\n$(cat /home/$UNAME/.bashrc)" | sudo -u $UNAME tee /home/$UNAME/.bashrc > /dev/null
+
+	if grep -qv "CTF" ~/home/$UNAME/.bashrc; then
+            cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
+echo "
+    This is a CTF system.
+        * The home will be cleared on exit.
+        * You can persist in /tmp, but: 1) anyone can read it if they know the path 2) you cannot list files in /tmp 3) /tmp won't persist across system reboots. Save you important files elsewhere.
+        * You cannot keep daemons or background jobs running after exit
+        * There are no flags on this system, there is nothing to gain by trying priv esc here; except a kick.
+"
+EOF
+	fi
     fi
 
     #Make dead files so villagers can't get code exec on later villagers
