@@ -12,7 +12,7 @@ args = parser.parse_args()
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
-streamname = s.query(DeviceQueue).filter_by(name=args.name).first()
+streamname = s.query(TwitchStream).filter_by(name=args.name).first()
 if not device:
     print("no stream found!")
     exit(0)
