@@ -12,5 +12,5 @@ args = parser.parse_args()
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
-s.add(TwitchStream(name=args.type))
+s.add(TwitchStream(name=args.name))
 s.commit()
