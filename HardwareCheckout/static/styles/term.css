@@ -235,6 +235,7 @@ a:hover {
 .available-devices--row {
   display: flex;
   justify-content: space-around;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .available-device {
@@ -412,3 +413,29 @@ a:hover {
   background-color: #bcf225;
 }
 
+/* Other forms */
+.form-section button {
+    border-color: #5fd9bd;
+    border-style: solid;
+    background-color: #5fd9bd;
+    color: #10041e;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 0px;
+}
+
+.form-section button:hover {
+  -moz-box-shadow: 0 0 15px #5fd9bd;
+  -webkit-box-shadow: 0 0 15px #5fd9bd;
+  box-shadow: 0px 0px 15px #5fd9bd;
+}
+
+.form-section input, .form-section button {
+  width: 400px !important;
+}
+
+.form-section textarea {
+  width: 600px !important;
+  min-width: 600px !important;
+}

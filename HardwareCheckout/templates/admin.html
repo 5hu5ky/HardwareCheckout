@@ -1,14 +1,117 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div>
+<div class="container">
     {% if messages %}
-    <h1>{% messages %}</h1>
+      <div class="notification notification-banner">
+        {{ messages }}
+      </div>
     {% end %}
-    <h1>Add Device Type</h1>
-    <form method="POST" action="/admin">
-        <input type="text" name="name">
-        <input hidden name="type" value="addDeviceType">
-    </form>
+    <div class="content">
+      <div class="section-header">Add Device Type</div>
+      <div class="form-section">
+        <form method="POST" action="/admin">
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="text" name="name" placeholder="Device type" autofocus="">
+                </div>
+            </div>
+            <input hidden name="type" value="addDeviceType">
+            <button class="button is-block is-fullwidth">Add New Device Type</button>
+        </form>
+      </div>
+    </div>
+    <div class="breaker-line"></div>
+    <div class="content">
+      <div class="section-header">Add Device</div>
+      <div class="form-section">
+        <form method="POST" action="/admin">
+          <div class="field">
+             <div class="control">
+                <input class="input" type="text" name="device_type" placeholder="Device type" autofocus="">
+             </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              <textarea class="textarea" name="device_info" placeholder="Copy/paste raspberry pi config here"></textarea>
+            </div>
+          </div>
+          <input hidden name="type" value="addDevice">
+          <button class="button is-block is-fullwidth">Create Device</button>
+        </form>
+      </div>
+    </div>
+    <div class="breaker-line"></div>
+    <div class="content">
+      <div class="section-header">Add Admin</div>
+      <div class="form-section">
+        <form method="POST" action="/admin">
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="text" name="username" placeholder="Username" autofocus="">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <input class="input" name="password" placeholder="Password">
+                </div>
+            </div>
+            <input hidden name="type" value="addAdmin">
+            <button class="button is-block is-fullwidth">Create Admin</button>
+        </form>
+      </div>
+    </div>
+    <div class="breaker-line"></div>
+    <div class="content">
+      <div class="section-header">Change Device Password</div>
+      <div class="form-section">
+        <form method="POST" action="/admin">
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="text" name="username" placeholder="Device name" autofocus="">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <input class="input" name="password" placeholder="New password">
+                </div>
+            </div>
+            <input hidden name="type" value="changeDevicePassword">
+            <button class="button is-block is-fullwidth">Change Device Password</button>
+        </form>
+      </div>
+    </div> 
+    <div class="breaker-line"></div>
+    <div class="content">
+      <div class="section-header">Remove Device</div>
+      <div class="form-section">
+        <form method="POST" action="/admin">
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="text" name="username" placeholder="Device name" autofocus="">
+                </div>
+            </div>
+            <input hidden name="type" value="rmDevice">
+            <button class="button is-block is-fullwidth">Remove Device</button>
+        </form>
+      </div>
+    </div>
+    <div class="breaker-line"></div> 
+    <div class="content">
+      <div class="section-header">Kill Session</div>
+      <div class="form-section">
+        <form method="POST" action="/admin">
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="text" name="username" placeholder="Device Name" autofocus="">
+                </div>
+            </div>
+            <input hidden name="type" value="killSession">
+            <button class="button is-block is-fullwidth">Kill Session</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 {% end %}
+

@@ -16,7 +16,7 @@ admin = Blueprint()
 class AdminHandler(UserBaseHandler):
     @authenticated
     async def get(self):
-        self.render('admin.html')
+        self.render('admin.html', messages=None)
 
     @authenticated
     async def post(self):
@@ -26,7 +26,7 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return self.render("admin.html", messages="Error in form submission")
 
-        errors = ''
+        errors = ""
         if req_type == "addDeviceType":
             errors = await self.addDeviceType()
         elif req_type == "addDevice":
@@ -53,19 +53,17 @@ class AdminHandler(UserBaseHandler):
 
     async def addDevice(self):
         try:
-            file = self.request.files['config'][0]
+            device_info = self.get_argument("device_info")
             device_type = self.get_argument("device_type")
-        except KeyError:
-            return "Missing device config file"
         except MissingArgumentError:
-            return "Missing device type"
+            return "Missing device type or config file info"
 
         config = ConfigParser()
         try:
-            config.read_string(file['body'])
+            config.read_string(device_info)
         except KeyError:
-            return "Error while trying to read the file"
-        
+            return "Error while trying to read the config file"
+
         error_msg = ''
         with self.make_session() as session:
             device_type_id = await as_future(session.query(DeviceType.id).filter_by(name=device_type).one)
