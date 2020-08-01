@@ -133,7 +133,7 @@ The server will come up on `https://127.0.0.1`
 - `./addDeviceType.py -t <type name>`
 
 ### Add device
-- Adding multiple devices:
+- Add multiple devices:
 `./addDevice.py -i <path/to/inifile> -t <devicetype>`
 
 - Add a single device:
@@ -143,7 +143,7 @@ The server will come up on `https://127.0.0.1`
 - `./rmDevice.py -d <device name>`
 
 ### Adding Twitch Streams (on the server side)
-- `./addTwitchStream.py -n <stream name>`
+- `./addTwitchStream.py -n <streamname>`
 
 ## Hardware Setup (Raspberry Pi)
 Clone the repo on to your Rasberry Pi; under the tmate folder look for the `install.sh`

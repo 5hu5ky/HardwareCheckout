@@ -76,8 +76,21 @@ class Client(object):
         elif msg_type == 'restart':
             print("Got restart request for {}".format(params))
             # TODO find this device and send it a studown command
+            await self.kill(params)
             await self.deprovision(params)
 
+    async def kill(self, device):
+        p = subprocess(
+            ["pkill", "-u", "villager-" + device], 
+            stdout = subprocess.STREAM, 
+            stderr = subprocess.STREAM
+            )
+
+        try:
+            await p.wait_for_exit()
+        except Exception:
+            return False
+        return True
 
     async def deprovision(self, device):
         p = subprocess(

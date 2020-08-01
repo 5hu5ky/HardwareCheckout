@@ -25,6 +25,7 @@ class MainHandler(UserBaseHandler):
         show_streams = True
         devices = []
         queues = []
+        tstreams = []
         
         # If no background queue update thread as started, start it
         if self.timer is None:
