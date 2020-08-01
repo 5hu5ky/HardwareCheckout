@@ -85,11 +85,14 @@
         <div class="breaker-line"></div>
 
         {% if show_streams %}
-        <div class="columns twitch-streams">
-            <div id="stream-1" class="column"></div>
-            <div id="stream-2" class="column"></div>
-            <div id="stream-3" class="column"></div>
-        </div>
+        	{% if tstreams %}
+        		{% for stream in tstreams %}
+					{% if loop.first %}<div class="columns twitch-streams">{% end %}
+					<div id="stream-{{loop.index}}" class="column"></div> 				    
+		    		{% if loop.index %3 == 0 and loop.index!=tstreams|length %}</div><div class="columns twitch-streams">{% end %}
+    				{% if loop.last %}</div>{% end %}
+				{% end %}       
+        	{% end %}
         {% end %}
 
         <div class="tab">
@@ -109,22 +112,13 @@
 {% block scripts %}
 <script src="{{ static_url('js/queue.js') }}"></script>
 <script type="text/javascript">
-    let player1 = new Twitch.Player("stream-1", {
+{% for stream in tstreams %}
+let player{{loop.index}} = new Twitch.Player("stream-{{loop.index}}", {
         width: 400,
         height: 300,
-        channel: "carhackingvillage"
+        channel: "{{stream}}"
     });
-    let player2 = new Twitch.Player("stream-2", {
-        width: 400,
-        height: 300,
-        channel: "carhackingvillage2"
-    });
-    let player3 = new Twitch.Player("stream-3", {
-        width: 400,
-        height: 300,
-        channel: "carhackingvillage3"
-    });
-
+{% end %}
 </script>
 {% end %}
 
