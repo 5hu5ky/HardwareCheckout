@@ -15,6 +15,12 @@ from .models import db
 
 # init SQLAlchemy so we can use it later in our models
 
+class NotFoundHandler(RequestHandler):
+    def get(self):
+        self.set_status(404)
+        self.render("error.html", error="404")
+        
+
 def create_redirect():
     class sslRedirect(RequestHandler):
         def get(self):
@@ -51,6 +57,7 @@ def create_app():
         # xsrf_cookies=True,  #TODO
         websocket_ping_interval=10000,
         websocket_ping_timeout=30000,
+        default_handler_class=NotFoundHandler
     )
 
     return app
