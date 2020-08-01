@@ -13,7 +13,7 @@ session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
 streamname = s.query(TwitchStream).filter_by(name=args.name).first()
-if not device:
+if not streamname:
     print("no stream found!")
     exit(0)
 
