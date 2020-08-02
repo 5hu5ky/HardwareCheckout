@@ -10,9 +10,16 @@ from .auth import auth as auth_blueprint
 from .terminals import terms as terminal_blueprint
 from .queue import queue as queue_blueprint
 from .device import device as device_blueprint
+from .admin import admin as admin_blueprint
 from .models import db
 
 # init SQLAlchemy so we can use it later in our models
+
+class NotFoundHandler(RequestHandler):
+    def get(self):
+        self.set_status(404)
+        self.render("error.html", error="404")
+        
 
 def create_redirect():
     class sslRedirect(RequestHandler):
@@ -39,7 +46,8 @@ def create_app():
             *(auth_blueprint.publish('/')),
             *(terminal_blueprint.publish('/')),
             *(queue_blueprint.publish('/queue')),
-            *(device_blueprint.publish('/device'))
+            *(device_blueprint.publish('/device')),
+            *(admin_blueprint.publish("/admin")),
         ],
         login_url="/login",
         cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
@@ -49,6 +57,7 @@ def create_app():
         # xsrf_cookies=True,  #TODO
         websocket_ping_interval=10000,
         websocket_ping_timeout=30000,
+        default_handler_class=NotFoundHandler
     )
 
     return app

@@ -185,7 +185,7 @@ class DeviceStateHandler(UserBaseHandler):
             DeviceStateHandler.return_device,
             repeat=False,
             timeout=1800,
-            args=[deviceID],
+            args=[deviceID, "queue_timeout"],
         )
         timer.start()
         try:
@@ -206,22 +206,22 @@ class DeviceStateHandler(UserBaseHandler):
             on_user_assigned_device(userID[0], device)
 
     @staticmethod
-    async def return_device(deviceID):
+    async def return_device(deviceID, reason):
         await ControllerHandler.restart_device(deviceID)
         with make_session() as session:
             userID = await as_future(
                 session.query(DeviceQueue.owner).filter_by(id=deviceID).one
             )
-        on_user_deallocated_device(userID, deviceID, "queue_timeout")
+        on_user_deallocated_device(userID, deviceID, reason)
         
 
     @staticmethod
     async def device_in_use(deviceID):
         timer = Timer(
-            DeviceStateHandler.reclaim_device,
+            DeviceStateHandler.return_device,
             repeat=False,
             timeout=1800,
-            args=[deviceID],
+            args=[deviceID, "normal_timeout"],
         )
         timer.start()
         try:
@@ -233,17 +233,14 @@ class DeviceStateHandler(UserBaseHandler):
             DeviceStateHandler.push_timer(deviceID, timer)
 
     @staticmethod
-    async def reclaim_device(deviceID):
-        raise NotImplementedError("TODO: how?")
-        # await DeviceStateHandler.send_message_to_owner(deviceID, 'device_reclaimed')
-        # await DeviceStateHandler.deprovision_device(deviceID)
-
-    @staticmethod
-    async def send_message_to_owner(deviceID, message):
-        raise NotImplementedError("TODO")
-        # with make_session() as session:
-        #     owner, name = await as_future(session.query(DeviceQueue.owner, DeviceQueue.name).filter_by(id=deviceID).one)
-        # QueueWSHandler.notify_user(owner, error=message, device=name)
+    async def killSession(deviceID):
+        try:
+            timer = DeviceStateHandler.pop_timer(deviceID)
+            timer.stop()
+            del timer
+        except KeyError:
+            pass
+        await DeviceStateHandler.return_device(deviceID, "killed")
 
     @classmethod
     def push_timer(cls, deviceID, timer):
