@@ -142,8 +142,12 @@ The server will come up on `https://127.0.0.1`
 ### Remove device
 - `./rmDevice.py -d <device name>`
 
-### Adding Twitch Streams (on the server side)
+### Add Twitch stream (on the server side)
 - `./addTwitchStream.py -n <streamname>`
+
+### RemoveTwitch stream (on the server side)
+- `./rmTwitchStream.py -n <streamname>`
+
 
 ## Hardware Setup (Raspberry Pi)
 Clone the repo on to your Rasberry Pi; under the tmate folder look for the `install.sh`

@@ -5,12 +5,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-n', '--name', help="Stream name to add", required=True)
+parser = ArgumentParser()
+parser.add_argument('-n', '--name', help="Stream name to delete", required=True)
 args = parser.parse_args()
-
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
-s.add(TwitchStream(name=args.name))
+
+streamname = s.query(TwitchStream).filter_by(name=args.name).first()
+if not streamname:
+    print("no stream found!")
+    exit(0)
+
+s.delete(streamname)
 s.commit()
