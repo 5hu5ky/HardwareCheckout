@@ -20,11 +20,9 @@ class UserBaseHandler(SessionMixin, RequestHandler):
         Not allowed to be async
         '''
         try:
-            user_cookie = int(self.get_secure_cookie('user'))
+            user_cookie = int(self.get_secure_cookie('user', max_age_days=2))
             return user_cookie
-        except NoResultFound:
-            return False
-        except TypeError:
+        except Exception:
             return False
 
 

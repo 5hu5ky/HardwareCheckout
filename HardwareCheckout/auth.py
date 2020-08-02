@@ -9,6 +9,7 @@ from .webutil import Blueprint, UserBaseHandler
 
 auth = Blueprint()
 
+PASSWORD_CRYPTO_TYPE="pbkdf2:sha256:45000"
 
 @auth.route("/login", name="login")
 class LoginHandler(UserBaseHandler):
@@ -41,7 +42,7 @@ class LoginHandler(UserBaseHandler):
             return self.render("login.html", messages="Invalid username or password")
 
         # Successful login, they deserve a cookie
-        self.set_secure_cookie("user", str(userId))
+        self.set_secure_cookie("user", str(userId), expires_days=2)
         return self.redirect(self.reverse_url("main"))
 
     def get(self):
@@ -71,9 +72,13 @@ class SignUpHandler(UserBaseHandler):
         try:
             name = self.get_argument("name")
             password = self.get_argument("password")
-            ctf = self.get_argument("ctf")
         except MissingArgumentError:
             return self.render("signup.html", messages="Missing username or password")
+
+        try:
+            ctf = 1 if self.get_argument("ctf") is not None else 0
+        except Exception:
+            ctf = 0
 
         with self.make_session() as session:
             # Check and see if that username already exists
@@ -88,8 +93,8 @@ class SignUpHandler(UserBaseHandler):
             # Create the new user entry
             new_user = User(
                 name=name,
+                password=generate_password_hash(password, method=PASSWORD_CRYPTO_TYPE),
                 ctf=ctf,
-                password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
                 roles=[roles],
             )
 
