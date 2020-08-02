@@ -12,5 +12,5 @@ args = parser.parse_args()
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
-s.add(DeviceType(name=args.type))
+s.add(DeviceType(name=args.type,enabled=1))
 s.commit()
