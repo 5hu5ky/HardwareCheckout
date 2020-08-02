@@ -61,11 +61,11 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
             QueueWSHandler.waiters[-1].remove(self)
 
 
-@queue.route('/')
-class ListAllQueuesHandler(SessionMixin, RequestHandler):
-    async def get(self):
-        queues = await DeviceType.get_queues_async(self.session)
-        self.write({'result': [{'id': id, 'name': name, 'size': size} for id, name, size in queues]})
+# @queue.route('/')
+# class ListAllQueuesHandler(SessionMixin, RequestHandler):
+#     async def get(self):
+#         queues = await DeviceType.get_queues_async(self.session)
+#         self.write({'result': [{'id': id, 'name': name, 'size': size} for id, name, size in queues]})
 
 
 @queue.route(r'/(\d+)')
