@@ -118,11 +118,11 @@
 {% block scripts %}
 <script src="{{ static_url('js/queue.js') }}"></script>
 <script type="text/javascript">
-{% for stream in tstreams %}
-let player{{loop.index}} = new Twitch.Player("stream-{{loop.index}}", {
+{% for count in range(len(tstreams)) %}
+let player{{count}} = new Twitch.Player("stream-{{count}}", {
         width: 400,
         height: 300,
-        channel: "{{stream}}"
+        channel: "{{tstreams[count]}}"
     });
 {% end %}
 </script>
