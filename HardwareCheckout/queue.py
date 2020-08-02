@@ -100,10 +100,20 @@ class SingleQueueHandler(UserBaseHandler):
 
         with self.make_session() as session:
             # Check if the user is already registered for a queue
-            entry = await as_future(session.query(UserQueue).filter_by(userId=self.current_user, type=id).first)
+            try:
+                entry = await as_future(session.query(UserQueue).filter_by(userId=self.current_user, type=id).first)
+            except Exception:
+                return self.render("error.html", error="Error while trying to join queue") # meh... someone else write a better error message
+
             if entry:
-                self.render("error.html", error="User already registered for this queue")
+                return self.render("error.html", error="User already registered for this queue")
             else:
+                #quickly check if the queue is enabled
+                try:
+                    await as_future(session.query(DeviceType.name).filter_by(id=id, enabled=1).one)
+                except Exception:
+                    return self.render("error.html", error="Queue is disabled")
+
                 # Add user to the queue
                 newEntry = UserQueue(userId=self.current_user, type=id)
                 session.add(newEntry)
