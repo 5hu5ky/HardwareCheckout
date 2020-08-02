@@ -52,6 +52,7 @@ class MainHandler(UserBaseHandler):
 
             # get a listing of all the queues available
             # Make a copy of the list because we are iterating through it
+            tstreams = self.tstreams
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "size": i[2]} for i in tqueues]
 
