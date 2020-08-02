@@ -2,6 +2,7 @@ from .models import DeviceQueue, DeviceType, User, UserQueue, TwitchStream
 from .webutil import Blueprint, UserBaseHandler, Timer, make_session
 from tornado_sqlalchemy import as_future
 from sqlalchemy import func, or_
+from tornado import locks
 
 main = Blueprint()
 
@@ -13,6 +14,7 @@ class MainHandler(UserBaseHandler):
     ROTerminals = []
     queues = []
     tstreams = []
+    lock = locks.Lock()
     
     async def get(self):
         """
@@ -29,8 +31,10 @@ class MainHandler(UserBaseHandler):
         
         # If no background queue update thread as started, start it
         if self.timer is None:
-            print("Scheduling")
-            self.__class__.timer = Timer(self.updateQueues, timeout=5)
+            async with self.lock: # we don't want the overhead of getting the lock EVERY loop, so this should be fine
+                if self.timer is None:
+                    print("Scheduling")
+                    self.__class__.timer = Timer(self.updateQueues, timeout=5)
 
         # check if use is logged in
         if self.current_user:
@@ -59,11 +63,9 @@ class MainHandler(UserBaseHandler):
 
     @classmethod
     async def updateQueues(cls):
-        '''
-        TODO: I couldn't get this to work with the functions in DeviceQueue and DeviceType. Don't know why.
-        '''
-        with make_session() as session:
-            cls.RWTerminals = await as_future(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state="in-use").all)
-            cls.ROTerminals = await as_future(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state="in-use",ctf=1).all)
-            cls.queues      = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
-            cls.tstreams    = await as_future(session.query(TwitchStream.name).all)
+        async with cls.lock:
+            with make_session() as session:
+                cls.RWTerminals = await as_future(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state="in-use").all)
+                cls.ROTerminals = await as_future(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter_by(state="in-use",ctf=0).all)
+                cls.queues      = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
+                cls.tstreams    = await as_future(session.query(TwitchStream.name).all)

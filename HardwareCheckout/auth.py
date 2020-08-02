@@ -71,9 +71,13 @@ class SignUpHandler(UserBaseHandler):
         try:
             name = self.get_argument("name")
             password = self.get_argument("password")
-            ctf = self.get_argument("ctf")
         except MissingArgumentError:
             return self.render("signup.html", messages="Missing username or password")
+
+        try:
+            ctf = 1 if self.get_argument("ctf") is not None else 0
+        except Exception:
+            ctf = 0
 
         with self.make_session() as session:
             # Check and see if that username already exists
