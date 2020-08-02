@@ -42,7 +42,7 @@ class LoginHandler(UserBaseHandler):
             return self.render("login.html", messages="Invalid username or password")
 
         # Successful login, they deserve a cookie
-        self.set_secure_cookie("user", str(userId))
+        self.set_secure_cookie("user", str(userId), expires_days=2)
         return self.redirect(self.reverse_url("main"))
 
     def get(self):
