@@ -86,11 +86,17 @@
 
         {% if show_streams %}
         	{% if tstreams %}
-        		{% for stream in tstreams %}
-					{% if loop.first %}<div class="columns twitch-streams">{% end %}
-					<div id="stream-{{loop.index}}" class="column"></div> 				    
-		    		{% if loop.index %3 == 0 and loop.index!=tstreams|length %}</div><div class="columns twitch-streams">{% end %}
-    				{% if loop.last %}</div>{% end %}
+        		{% for count in range(len(tstreams)) %}
+                    {% if ((count % 3) == 0) %}
+                        {% if (count != 0) %}
+                        </div>
+                        {% end %}
+                        <div class="columns twitch-streams">
+                    {% end %}
+                    <div id="stream-{{ count }}" class="column"></div>
+                    {% if (count == (len(tstreams)-1)) %}
+                        </div>
+                    {% end %}
 				{% end %}       
         	{% end %}
         {% end %}
