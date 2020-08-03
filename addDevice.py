@@ -72,7 +72,7 @@ def csvParse(csvPath):
                 else:
                     result.append(components)
         except:
-            print("Couldn't read {}, {}".format(args.inifile))
+            print("Couldn't read {}, {}".format(args.ini))
             exit(1)
             
     return result
@@ -86,19 +86,19 @@ def printHelp():
     exit(1)
     
 def main():
-    if args.inifile and (args.username or args.password) and not args.type:
+    if args.ini and (args.username or args.password) and not args.type:
         print ("You cannot define username, password, but must define device type when you define a ini file!!")
     elif args.username and args.password and args.type:
         deviceAdd(args.username,args.password,args.type)
     else:
-        if not args.inifile or not args.type:
+        if not args.ini or not args.type:
             printHelp()
-        if not os.path.isfile(args.inifile):
-            print ("Ini file {} doesn't exist!".format(args.inifile))
+        if not os.path.isfile(args.ini):
+            print ("Ini file {} doesn't exist!".format(args.ini))
             exit(1)
         # for parsing csv files replace this with
         # csvParse(csvPath) --> Note that csvParse expects device type in the file
-        users = iniParse(args.inifile, args.type) 
+        users = iniParse(args.ini, args.type) 
         
         for user in users:
             deviceAdd(user[0],user[1],user[2])
