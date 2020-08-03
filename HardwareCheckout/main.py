@@ -27,7 +27,7 @@ class MainHandler(UserBaseHandler):
         show_streams = True
         devices = []
         queues = []
-        tstreams = []
+        tstreams = self.tstreams
         
         # If no background queue update thread as started, start it
         if self.timer is None:
@@ -58,7 +58,6 @@ class MainHandler(UserBaseHandler):
             # Make a copy of the list because we are iterating through it
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "size": i[2]} for i in tqueues]
-
         self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals)
 
     @classmethod
