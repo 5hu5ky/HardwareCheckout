@@ -85,20 +85,16 @@
         <div class="breaker-line"></div>
 
         {% if show_streams %}
-        	{% if tstreams %}
-        		{% for count in range(len(tstreams)) %}
-                    {% if ((count % 3) == 0) %}
-                        {% if (count != 0) %}
-                        </div>
-                        {% end %}
-                        <div class="columns twitch-streams">
+        <div class="content">
+        <div class="section-header">Live Action</div>
+            {% if tstreams %}
+                <div class="columns twitch-streams">
+                    {% for count in range(len(tstreams)) %}
+                        <div id="stream-{{ count }}" class="twitch-stream"></div>
                     {% end %}
-                    <div id="stream-{{ count }}" class="column"></div>
-                    {% if (count == (len(tstreams)-1)) %}
-                        </div>
-                    {% end %}
-				{% end %}       
-        	{% end %}
+                </div>
+            {% end %}      
+        </div>
         {% end %}
 
         <div class="tab">
@@ -120,8 +116,8 @@
 <script type="text/javascript">
 {% for count in range(len(tstreams)) %}
 let player{{count}} = new Twitch.Player("stream-{{count}}", {
-        width: 400,
-        height: 300,
+        width: 360,
+        height: 280,
         channel: "{{tstreams[count]}}"
     });
 {% end %}
