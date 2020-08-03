@@ -88,7 +88,6 @@ EOF
     sudo -u $UNAME test -f /home/$UNAME/.ssh/id_rsa || sudo -u $UNAME ssh-keygen -t rsa -b 4096 -f /home/$UNAME/.ssh/id_rsa -N "" -C "$UNAME@$HOSTNAME"
 
     sudo -u $UNAME install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
-    sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
 
     if ! grep -q "unset AUTH" /home/$UNAME/.bashrc; then
     sudo chattr -i /home/$UNAME/.bashrc
@@ -172,6 +171,7 @@ sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/controller.py
 sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 
 sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
+sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
 
 if [[ "${INIT}" == "systemd" ]]; then
     sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system/ || die "couldn't install systemd stuff"
