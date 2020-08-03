@@ -125,6 +125,8 @@ EOF
 
 }
 
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
 for name in $UNAMES; do
     prep_user $name
 done
@@ -134,7 +136,6 @@ if ${CTF_MODE}; then
     sudo chmod 753 /tmp 
 fi
 
-SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 if ! which pip3; then
     sudo apt-get install -y python3-pip
 fi
