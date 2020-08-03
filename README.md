@@ -153,3 +153,8 @@ The server will come up on `https://127.0.0.1`
 Clone the repo on to your Rasberry Pi; under the tmate folder look for the `install.sh`
 - `./tmate/install.sh <hostname or ip of server>[:<port>] <name of this device>` (a `<port>` can be specified if the server uses a non-standard port)
 
+There are some environment variables you can specify to change the install: `INIT`, `NUM_SESSIONS`, `CTF_MODE`
+
+* `NUM_SESSIONS` default ***6***; specify how many concurrent tmate sessions to support on this device
+* `CTF_MODE` default `true`; specify `false` to disable CTF features such as clearing homedir on exit.
+* `INIT` default 'systemd`; specify `upstart` for an alternate init system
