@@ -126,6 +126,14 @@ EOF
 }
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+if [ -f $SCRIPTPATH/controller.py.bak ]; then
+    mv $SCRIPTPATH/controller.py.bak $SCRIPTPATH/controller.py
+fi
+sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/controller.py
+if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
+    mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
+fi
+sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 
 for name in $UNAMES; do
     prep_user $name
@@ -161,15 +169,6 @@ if [ ! -d "$APP_PATH/venv" ]; then
 fi
 $APP_PATH/venv/bin/pip3 install -r $SCRIPTPATH/requirements.txt
 EOF
-
-if [ -f $SCRIPTPATH/controller.py.bak ]; then
-    mv $SCRIPTPATH/controller.py.bak $SCRIPTPATH/controller.py
-fi
-if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
-    mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
-fi
-sed -i.bak "s|localhost:8080|$1|g" $SCRIPTPATH/controller.py
-sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 
 sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
 sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
