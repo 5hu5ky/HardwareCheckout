@@ -3,7 +3,7 @@ from tornado.websocket import WebSocketClosedError, WebSocketHandler
 from tornado_sqlalchemy import SessionMixin, as_future
 
 from .models import DeviceType, UserQueue, User
-from .webutil import Blueprint, Waiters, UserBaseHandler
+from .webutil import Blueprint, Waiters, UserBaseHandler, Timer, make_session
 
 queue = Blueprint()
 
@@ -23,6 +23,7 @@ def on_user_deallocated_device(userId, deviceID, reason="normal"):
 @queue.route("/event")
 class QueueWSHandler(UserBaseHandler, WebSocketHandler):
     waiters = Waiters()
+    closed = {}
 
     def get_compression_options(self):
         # Non-None enables compression with default options.
@@ -30,6 +31,9 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     async def open(self):
         if self.current_user:
+            if self.closed[self.current_user]:
+                self.closed[self.current_user].stop()
+                del self.closed[self.current_user]
             self.waiters[self.current_user].add(self)
             # send all devices, in case WS connecton was terminated then re-established
             # and a device was assigned in the meantime
@@ -57,9 +61,17 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
     def on_close(self):
         if self.current_user:
             QueueWSHandler.waiters[self.current_user].remove(self)
+            if 0 >= len(QueueWSHandler.waiters[self.current_user].bucket):
+                t = Timer(self.remove_user, repeat=False, timeout=(60*15), args=(self.current_user))
+                self.closed[self.current_user] = t
         else:
             QueueWSHandler.waiters[-1].remove(self)
 
+    @classmethod
+    def remove_user(cls, user):
+        with make_session() as session:
+            queueEntry = await as_future(session.query(UserQueue).filter_by(userId=user).one)
+            session.delete(queueEntry)
 
 # @queue.route('/')
 # class ListAllQueuesHandler(SessionMixin, RequestHandler):
