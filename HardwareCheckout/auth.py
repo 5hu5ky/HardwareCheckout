@@ -116,7 +116,8 @@ class LogoutHandler(UserBaseHandler):
         """
         #TODO(WRS): Remove this if badness happens
         with self.make_session() as session:
-            await as_future(session.query(UserQueue).filter(UserQueue.id==self.current_user).delete)
+            print('Deleting where user is {}'.format(self.current_user))
+            await as_future(session.query(UserQueue).filter(UserQueue.userId==self.current_user).delete)
             await as_future(session.commit)
             devices = await as_future(session.query(DeviceQueue).filter(DeviceQueue.owner==self.current_user).all)
             gen_log = logging.getLogger("tornado.general")
