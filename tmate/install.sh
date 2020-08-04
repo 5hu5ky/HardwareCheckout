@@ -98,7 +98,7 @@ EOF
         sudo chattr -i /home/$UNAME/.bashrc
         echo -e "rm -rf ~/.* ~/* 2>/dev/null\n$(cat /home/$UNAME/.bashrc)" | sudo -u $UNAME tee /home/$UNAME/.bashrc > /dev/null
 
-	if grep -qv "CTF" ~/home/$UNAME/.bashrc; then
+	if grep -qv "CTF" /home/$UNAME/.bashrc; then
             cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 echo "
     This is a CTF system.
