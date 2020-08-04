@@ -63,7 +63,6 @@ class Client(object):
             self.ws.write_message(json_encode({"type": "keep-alive"}))
 
     async def handle_message(self, message):
-        # TODO make async and fix
         try:
             data = json_decode(message)
             msg_type = data.get("type", None)
@@ -75,9 +74,7 @@ class Client(object):
             return
         elif msg_type == 'restart':
             print("Got restart request for {}".format(params))
-            # TODO find this device and send it a studown command
             await self.kill(params)
-            await self.deprovision(params)
 
     async def kill(self, device):
         p = subprocess(
@@ -92,18 +89,18 @@ class Client(object):
             return False
         return True
 
-    async def deprovision(self, device):
-        p = subprocess(
-            ["tmate", "-S", os.path.join("/tmp/devices/", device, "{}.sock".format(device)), "wait", "tmate-ready"], 
-            stdout = subprocess.STREAM, 
-            stderr = subprocess.STREAM
-            )
+    # async def deprovision(self, device):
+    #     p = subprocess(
+    #         ["tmate", "-S", os.path.join("/tmp/devices/", device, "{}.sock".format(device)), "wait", "tmate-ready"], 
+    #         stdout = subprocess.STREAM, 
+    #         stderr = subprocess.STREAM
+    #         )
 
-        try:
-            await p.wait_for_exit()
-        except Exception:
-            return False
-        return True
+    #     try:
+    #         await p.wait_for_exit()
+    #     except Exception:
+    #         return False
+    #     return True
 
     async def register_device(self, device):
         self.ws.write_message(json_encode({'type':"register", "params":device}))
