@@ -111,10 +111,12 @@ EOF
 	fi
     fi
 
+    #Make both interactive and non-interactive shells use the same init in .bashrc prepared above
+    echo "source /home/$UNAME/.bashrc" | sudo -u $UNAME tee /home/$UNAME/.bash_profile > /dev/null
+
     #Make dead files so villagers can't get code exec on later villagers
     sudo -u $UNAME touch /home/$UNAME/.dircolors
     sudo -u $UNAME touch /home/$UNAME/.bash_aliases
-    sudo -u $UNAME touch /home/$UNAME/.bash_profile
     sudo -u $UNAME touch /home/$UNAME/.bash_login
     sudo -u $UNAME touch /home/$UNAME/.viminfo
 
