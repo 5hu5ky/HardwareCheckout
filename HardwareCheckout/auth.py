@@ -116,9 +116,9 @@ class LogoutHandler(UserBaseHandler):
         """
         #TODO(WRS): Remove this if badness happens
         with self.make_session() as session:
-            await as_future(session.query(UserQueue).filter(UserQueue.id==self.current_user.id).delete)
+            await as_future(session.query(UserQueue).filter(UserQueue.id==self.current_user).delete)
             await as_future(session.commit)
-            devices = await as_future(session.query(DeviceQueue).filter(DeviceQueue.owner==self.current_user.id).all)
+            devices = await as_future(session.query(DeviceQueue).filter(DeviceQueue.owner==self.current_user).all)
             gen_log = logging.getLogger("tornado.general")
             if len(devices) == 0:
                 print('User has no devices...')

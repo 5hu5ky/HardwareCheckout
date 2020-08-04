@@ -30,7 +30,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
         return {}
 
     async def open(self):
-        if self.current_user:
+        if self.current_user and self.current_user in self.closed:
             if self.closed[self.current_user]:
                 self.closed[self.current_user].stop()
                 del self.closed[self.current_user]
