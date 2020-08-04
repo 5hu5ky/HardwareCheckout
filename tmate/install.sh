@@ -98,7 +98,7 @@ EOF
         sudo chattr -i /home/$UNAME/.bashrc
         echo -e "rm -rf ~/.* ~/* 2>/dev/null\n$(cat /home/$UNAME/.bashrc)" | sudo -u $UNAME tee /home/$UNAME/.bashrc > /dev/null
 
-	if grep -qv "CTF" ~/home/$UNAME/.bashrc; then
+	if grep -qv "CTF" /home/$UNAME/.bashrc; then
             cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 echo "
     This is a CTF system.
@@ -111,10 +111,12 @@ EOF
 	fi
     fi
 
+    #Make both interactive and non-interactive shells use the same init in .bashrc prepared above
+    echo "source /home/$UNAME/.bashrc" | sudo -u $UNAME tee /home/$UNAME/.bash_profile > /dev/null
+
     #Make dead files so villagers can't get code exec on later villagers
     sudo -u $UNAME touch /home/$UNAME/.dircolors
     sudo -u $UNAME touch /home/$UNAME/.bash_aliases
-    sudo -u $UNAME touch /home/$UNAME/.bash_profile
     sudo -u $UNAME touch /home/$UNAME/.bash_login
     sudo -u $UNAME touch /home/$UNAME/.viminfo
 
