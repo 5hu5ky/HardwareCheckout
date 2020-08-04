@@ -147,6 +147,18 @@ The server will come up on `https://127.0.0.1`
 ### Remove device
 - `./rmDevice.py -d <device name>`
 
+note: you will need to do this for each of the devices created for each session and also the controller. e.g. you will probably need to do
+
+```
+./rmDevice.py -d myrpi-device0
+./rmDevice.py -d myrpi-device1
+./rmDevice.py -d myrpi-device2
+./rmDevice.py -d myrpi-device3
+./rmDevice.py -d myrpi-device4
+./rmDevice.py -d myrpi-device5
+./rmDevice.py -d myrpi-controller
+```
+
 ### Add Twitch stream (on the server side)
 - `./addTwitchStream.py -n <streamname>`
 
