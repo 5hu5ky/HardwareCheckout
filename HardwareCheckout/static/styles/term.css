@@ -314,6 +314,17 @@ a:hover {
 .twitch-streams {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.twitch-stream {
+  padding: 1em;
+}
+
+.twitch-stream iframe {
+  border: 1px solid rgba(188, 242, 37, 0.4);
 }
 
 /* table and mobile */
