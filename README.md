@@ -39,6 +39,8 @@ If you want to debug the application:
 journalctl -u HardwareCheckout
 ```
 
+Additional verbosity from the application can be had by running with the `--logging=debug` argument.
+
 View the entries within the last five minutes:
 
 ```
@@ -73,12 +75,15 @@ cd /opt/HardwareCheckout
 
 Once the install is done the server will come up on - `http://127.0.0.1:8080`
 
-This is not a supported configuration. For `tmate` stuff to work you will need to
+This is not a supported configuration; but no server-side setup is needed.
 
+On all clients, you will need to:
 * edit `controller.py` to use `ws://` instead of `wss://`
 * edit `.tmate.conf` to use `http://` instead of `https://`
 
 #### SSL setup
+
+This is the supported configuration; no changes to any clients are needed; but some setup of certs server-side is.
 
 You can quickly get going using Let's Encrypt; copy this into certbot-install.sh:
 
@@ -155,6 +160,6 @@ Clone the repo on to your Rasberry Pi; under the tmate folder look for the `inst
 
 There are some environment variables you can specify to change the install: `INIT`, `NUM_SESSIONS`, `CTF_MODE`
 
-* `NUM_SESSIONS` default ***6***; specify how many concurrent tmate sessions to support on this device
+* `NUM_SESSIONS` default ***6***; specify how many concurrent tmate sessions to support on this device.
 * `CTF_MODE` default `true`; specify `false` to disable CTF features such as clearing homedir on exit.
-* `INIT` default 'systemd`; specify `upstart` for an alternate init system
+* `INIT` default `systemd`; specify `upstart` for an alternate init system.
