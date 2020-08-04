@@ -70,8 +70,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
     @classmethod
     def remove_user(cls, user):
         with make_session() as session:
-            queueEntry = await as_future(session.query(UserQueue).filter_by(userId=user).one)
-            session.delete(queueEntry)
+            queueEntry = await as_future(session.query(UserQueue).filter_by(userId=user).delete)
 
 # @queue.route('/')
 # class ListAllQueuesHandler(SessionMixin, RequestHandler):
