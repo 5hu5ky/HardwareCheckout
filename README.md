@@ -175,3 +175,9 @@ There are some environment variables you can specify to change the install: `INI
 * `NUM_SESSIONS` default ***6***; specify how many concurrent tmate sessions to support on this device.
 * `CTF_MODE` default `true`; specify `false` to disable CTF features such as clearing homedir on exit.
 * `INIT` default `systemd`; specify `upstart` for an alternate init system.
+
+If you're _re-installing_ or if your users are having trouble seeing connected devices: you can try restarting all of the tmate session processes with
+
+```sh
+sudo systemctl restart 'session@*'
+```
