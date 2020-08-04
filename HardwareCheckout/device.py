@@ -209,10 +209,13 @@ class DeviceStateHandler(UserBaseHandler):
     async def return_device(deviceID, reason):
         await ControllerHandler.restart_device(deviceID)
         with make_session() as session:
-            userID = await as_future(
-                session.query(DeviceQueue.owner).filter_by(id=deviceID).one
+            device = await as_future(
+                session.query(DeviceQueue).filter_by(id=deviceID).one
             )
-        on_user_deallocated_device(userID, deviceID, reason)
+            on_user_deallocated_device(userID, deviceID, reason)
+            #userID = device.owner
+            device.owner = None
+            await as_future(session.commit)
         
 
     @staticmethod

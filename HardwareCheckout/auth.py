@@ -3,9 +3,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from tornado_sqlalchemy import SessionMixin, as_future
 from functools import partial
 
+import logging
 
-from .models import User, Role, db
+from .models import User, Role, db, UserQueue, DeviceQueue
 from .webutil import Blueprint, UserBaseHandler
+from .device import DeviceStateHandler
 
 auth = Blueprint()
 
@@ -107,10 +109,22 @@ class SignUpHandler(UserBaseHandler):
 @auth.route("/logout", name="logout")
 class LogoutHandler(UserBaseHandler):
     @authenticated
-    def get(self):
+    async def get(self):
         """
         Path that handles logging a user out.
         :return:
         """
+        #TODO(WRS): Remove this if badness happens
+        with self.make_session() as session:
+            await as_future(session.query(UserQueue).filter(UserQueue.id==self.current_user.id).delete)
+            await as_future(session.commit)
+            devices = await as_future(session.query(DeviceQueue).filter(DeviceQueue.owner==self.current_user.id).all)
+            gen_log = logging.getLogger("tornado.general")
+            if len(devices) == 0:
+                print('User has no devices...')
+            for device in devices:
+                print('Returning {}'.format(device))
+                await DeviceStateHandler.return_device(device.id)
+        #TODO(WRS): End TODO
         self.clear_cookie("user")
         return self.redirect(self.reverse_url("main"))

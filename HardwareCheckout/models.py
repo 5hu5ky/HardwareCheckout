@@ -123,3 +123,5 @@ class TwitchStream(db.Model):
     __tablename__ = "twitchstreams"
     id = Column(Integer, primary_key=True)
     name = Column(String(200))
+    def __str__(self):
+        return '{} ({}): (Owned by: {}) {}'.format(self.id, self.name, self.owner, self.state)
