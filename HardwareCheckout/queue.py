@@ -62,7 +62,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
         if self.current_user:
             QueueWSHandler.waiters[self.current_user].remove(self)
             if 0 >= len(QueueWSHandler.waiters[self.current_user].bucket):
-                t = Timer(self.remove_user, repeat=False, timeout=(60*15), args=(self.current_user))
+                t = Timer(self.remove_user, repeat=False, timeout=(60*15), args=(self.current_user,))
                 self.closed[self.current_user] = t
         else:
             QueueWSHandler.waiters[-1].remove(self)
