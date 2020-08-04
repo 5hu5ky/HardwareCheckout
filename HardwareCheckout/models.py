@@ -125,4 +125,3 @@ class TwitchStream(db.Model):
     __tablename__ = "twitchstreams"
     id = Column(Integer, primary_key=True)
     name = Column(String(200))
-
