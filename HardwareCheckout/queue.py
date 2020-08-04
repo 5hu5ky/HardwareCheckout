@@ -68,7 +68,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
             QueueWSHandler.waiters[-1].remove(self)
 
     @classmethod
-    def remove_user(cls, user):
+    async def remove_user(cls, user):
         with make_session() as session:
             queueEntry = await as_future(session.query(UserQueue).filter_by(userId=user).delete)
 
