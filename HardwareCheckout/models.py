@@ -2,8 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy import func, or_
 from sqlalchemy.orm import relationship
 
-# from . import db
-from .config import db_path
+from .config import db_path #This is created dynamically during install...
 from tornado_sqlalchemy import SQLAlchemy, as_future
 from functools import partial
 
